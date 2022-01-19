@@ -2,8 +2,9 @@ use std::fmt;
 use std::rc::Rc;
 
 use crate::tok_flags::{IS_AT_BOL, LF_AFTER, WS_BEFORE};
+use crate::token::T::TOKEN_IDENT;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialOrd, PartialEq, Eq, Clone)]
 #[allow(non_camel_case_types)]
 pub enum T {
     TOKEN_ERROR,
@@ -13,7 +14,6 @@ pub enum T {
     TOKEN_WS,
     TOKEN_LF,
 
-    TOKEN_IDENT(Rc<String>),
     TOKEN_NUMBER,
     TOKEN_CHAR,
     TOKEN_STRING,
@@ -74,6 +74,33 @@ pub enum T {
     T_AT_SIGN,
     T_GRAVE_ACCENT,
     T_BACKSLASH,
+
+    // Keywords
+
+    // General identifier, may be a user-defined-name, or a keyword.
+    TOKEN_IDENT,
+
+    break_ident,
+    continue_ident,
+    do_ident,
+    else_ident,
+    for_ident,
+    if_ident,
+    return_ident,
+    while_ident,
+    static_ident,
+    pub_ident,
+    true_ident,
+    false_ident,
+    self_ident,
+    default_ident,
+    static_assert_ident,
+    assert_true_ident,
+    char_ident,
+    u8_ident,
+    i32_ident,
+    bool_ident,
+    struct_ident,
 }
 
 #[derive(PartialEq, Eq, Clone)]
@@ -129,14 +156,6 @@ impl<'a> Token {
         }
     }
 
-    pub(crate) fn new_ident(ident: Rc<String>) -> Self {
-        Token {
-            tp: T::TOKEN_IDENT(ident.clone()),
-            value: ident,
-            pos: 0,
-        }
-    }
-
 
     pub(crate) fn make_eof() -> Self {
         Token { tp: T::TOKEN_EOF, value: Rc::new("".to_string()), pos: 0 }
@@ -154,8 +173,12 @@ impl<'a> Token {
         self.tp == tp
     }
 
-    pub(crate) fn is_ident(&self, ident: &'a str) -> bool {
-        todo!()
+    pub(crate) fn is_any_ident(&self) -> bool {
+        return self.tp >= T::TOKEN_IDENT;
+    }
+
+    pub(crate) fn is_kw(&self) -> bool {
+        return self.tp > T::TOKEN_IDENT;
     }
 
     pub(crate) fn has_leading_ws(&self) -> bool {

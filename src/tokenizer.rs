@@ -10,7 +10,8 @@ fn next<'a>(buffer: &mut CBuf
             , punct_map_3: &HashMap<&str, T>
             , punct_map_2: &HashMap<&str, T>
             , punct_map_1: &HashMap<&str, T>
-            , punct_map_u: &HashMap<&str, T>) -> Token
+            , punct_map_u: &HashMap<&str, T>
+            , keywords: &HashMap<&str, T>) -> Token
 {
     let begin = buffer.peek_3();
     let c1 = begin[0];
@@ -88,7 +89,21 @@ fn next<'a>(buffer: &mut CBuf
             }
             sb.push(buffer.next() as char);
         }
-        return Token::new_ident(Rc::from(sb));
+
+        if keywords.contains_key(sb.as_str()) {
+            let tp = keywords.get(sb.as_str()).unwrap();
+            return Token {
+                tp: tp.clone(),
+                value: Rc::new(sb),
+                pos: 0,
+            };
+        }
+
+        return Token {
+            tp: T::TOKEN_IDENT,
+            value: Rc::new(sb),
+            pos: 0,
+        };
     }
 
     // operators
@@ -256,6 +271,7 @@ pub fn tokenize<'a>(s: &str) -> Vec<Token> {
     let mut punct_map_2 = maps.1;
     let mut punct_map_1 = maps.2;
     let mut punct_map_u = maps.3;
+    let mut keywords = maps.4;
 
 
     let mut line: Vec<Token> = Vec::new();
@@ -266,7 +282,8 @@ pub fn tokenize<'a>(s: &str) -> Vec<Token> {
                          , &punct_map_3
                          , &punct_map_2
                          , &punct_map_1
-                         , &punct_map_u);
+                         , &punct_map_u
+                         , &keywords);
 
         if t.is(T::TOKEN_EOF) {
             for tok in line {

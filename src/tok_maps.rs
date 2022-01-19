@@ -2,11 +2,12 @@ use std::collections::HashMap;
 
 use crate::token::T;
 
-pub fn make_maps() -> (HashMap<&'static str, T>, HashMap<&'static str, T>, HashMap<&'static str, T>, HashMap<&'static str, T>) {
+pub fn make_maps() -> (HashMap<&'static str, T>, HashMap<&'static str, T>, HashMap<&'static str, T>, HashMap<&'static str, T>, HashMap<&'static str, T>) {
     let mut punct_map_3: HashMap<&str, T> = HashMap::new();
     let mut punct_map_2: HashMap<&str, T> = HashMap::new();
     let mut punct_map_1: HashMap<&str, T> = HashMap::new();
     let mut punct_map_u: HashMap<&str, T> = HashMap::new();
+    let mut keywords: HashMap<&str, T> = HashMap::new();
 
     // " ... && -= >= ~ + ; ] <: "
     // " <<= &= -> >> % , < ^ :> "
@@ -84,5 +85,29 @@ pub fn make_maps() -> (HashMap<&'static str, T>, HashMap<&'static str, T>, HashM
     punct_map_u.insert("`", T::T_GRAVE_ACCENT);
     punct_map_u.insert("\\", T::T_BACKSLASH);
 
-    return (punct_map_3, punct_map_2, punct_map_1, punct_map_u);
+    // Keywords
+    keywords.insert("break", T::break_ident);
+    keywords.insert("continue", T::continue_ident);
+    keywords.insert("do", T::do_ident);
+    keywords.insert("else", T::else_ident);
+    keywords.insert("for", T::for_ident);
+    keywords.insert("if", T::if_ident);
+    keywords.insert("return", T::return_ident);
+    keywords.insert("while", T::while_ident);
+    keywords.insert("static", T::static_ident);
+    keywords.insert("pub", T::pub_ident);
+    keywords.insert("true", T::true_ident);
+    keywords.insert("false", T::false_ident);
+    keywords.insert("self", T::self_ident);
+    keywords.insert("default", T::default_ident);
+    keywords.insert("static_assert", T::static_assert_ident);
+    keywords.insert("assert_true", T::assert_true_ident);
+    keywords.insert("char", T::char_ident);
+    keywords.insert("u8", T::u8_ident);
+    keywords.insert("i32", T::i32_ident);
+    keywords.insert("bool", T::bool_ident);
+    keywords.insert("struct", T::struct_ident);
+
+
+    return (punct_map_3, punct_map_2, punct_map_1, punct_map_u, keywords);
 }
