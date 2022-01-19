@@ -88,8 +88,9 @@ fn read_file(filename: &str) -> String {
 }
 
 fn main() {
-    let content = read_file("./tests/test1.txt");
-    let tokenlist: Vec<Token> = tokenizer::tokenize(&content);
+    let filename = "./tests/test1.txt".to_string();
+    let content = read_file(filename.as_str());
+    let tokenlist: Vec<Token> = tokenizer::tokenize(&filename.clone(), &content);
 
     for tok in &tokenlist {
         if tok.has_leading_ws() {

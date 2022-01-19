@@ -4,9 +4,9 @@ use std::rc::Rc;
 use crate::{ascii_util, tok_maps};
 use crate::cbuf::CBuf;
 use crate::tok_flags::{IS_AT_BOL, LF_AFTER, WS_BEFORE};
-use crate::token::{T, Token};
+use crate::token::{SourceLoc, T, Token};
 
-fn next<'a>(buffer: &mut CBuf
+fn next<'a>(file_name: &String, buffer: &mut CBuf
             , punct_map_3: &HashMap<&str, T>
             , punct_map_2: &HashMap<&str, T>
             , punct_map_1: &HashMap<&str, T>
@@ -43,14 +43,13 @@ fn next<'a>(buffer: &mut CBuf
 
             buffer.next();
             buffer.next();
+
+            let sloc = SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column);
+
             while !buffer.is_eof() {
                 let tmp = buffer.next();
                 if tmp == b'\n' {
-                    return Token {
-                        tp: T::TOKEN_COMMENT,
-                        value: Rc::new(comments),
-                        pos: 0,
-                    };
+                    return Token::new(T::TOKEN_COMMENT, comments, sloc);
                 }
 
                 if tmp == b'\0' {
@@ -62,6 +61,8 @@ fn next<'a>(buffer: &mut CBuf
         } else if c2 == b'*' {
             buffer.next();
             buffer.next();
+
+            let sloc = SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column);
 
             let mut prev = b'\0';
             while !buffer.is_eof() {
@@ -96,6 +97,7 @@ fn next<'a>(buffer: &mut CBuf
                 tp: tp.clone(),
                 value: Rc::new(sb),
                 pos: 0,
+                loc: SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column)
             };
         }
 
@@ -103,6 +105,7 @@ fn next<'a>(buffer: &mut CBuf
             tp: T::TOKEN_IDENT,
             value: Rc::new(sb),
             pos: 0,
+            loc: SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column)
         };
     }
 
@@ -125,6 +128,7 @@ fn next<'a>(buffer: &mut CBuf
                 tp: tp.clone(),
                 value: Rc::new(three.to_string()),
                 pos: 0,
+                loc: SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column)
             };
         }
 
@@ -141,6 +145,7 @@ fn next<'a>(buffer: &mut CBuf
                 tp: tp.clone(),
                 value: Rc::new(two.to_string()),
                 pos: 0,
+                loc: SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column)
             };
         }
 
@@ -155,6 +160,7 @@ fn next<'a>(buffer: &mut CBuf
                 tp: tp.clone(),
                 value: Rc::new(one.to_string()),
                 pos: 0,
+                loc: SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column)
             };
         }
 
@@ -191,15 +197,17 @@ fn next<'a>(buffer: &mut CBuf
             tp: T::TOKEN_NUMBER,
             value: Rc::new(sb),
             pos: 0,
+            loc: SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column)
         };
     }
 
     // string, char
     if c1 == b'\"' || c1 == b'\'' {
-        let end = c1;
-        let mut sb = String::new();
-        buffer.next();
 
+        let end = buffer.next(); // skip the quote
+        let sloc = SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column);
+
+        let mut sb = String::new();
         while !buffer.is_eof() {
             let next = buffer.next();
 
@@ -234,6 +242,7 @@ fn next<'a>(buffer: &mut CBuf
                 tp: T::TOKEN_STRING,
                 value: Rc::new(repr),
                 pos: 0,
+                loc: sloc
             };
         }
 
@@ -241,6 +250,7 @@ fn next<'a>(buffer: &mut CBuf
             tp: T::TOKEN_CHAR,
             value: Rc::new(repr),
             pos: 0,
+            loc: sloc
         };
     }
 
@@ -255,6 +265,7 @@ fn next<'a>(buffer: &mut CBuf
             tp: tp.clone(),
             value: Rc::new(one.to_string()),
             pos: 0,
+            loc: SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column)
         };
     }
 
@@ -262,7 +273,7 @@ fn next<'a>(buffer: &mut CBuf
 }
 
 
-pub fn tokenize<'a>(s: &str) -> Vec<Token> {
+pub fn tokenize<'a>(file_name: &String, s: &str) -> Vec<Token> {
     let mut tokenlist: Vec<Token> = Vec::new();
     let mut buffer = CBuf::create(&s.to_string());
     let maps = tok_maps::make_maps();
@@ -278,7 +289,8 @@ pub fn tokenize<'a>(s: &str) -> Vec<Token> {
     let mut next_ws = false;
 
     while !buffer.is_eof() {
-        let mut t = next(&mut buffer
+        let mut t = next(file_name
+                         , &mut buffer
                          , &punct_map_3
                          , &punct_map_2
                          , &punct_map_1

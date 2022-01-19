@@ -1,4 +1,5 @@
 use std::fmt;
+use std::fmt::Write;
 use std::rc::Rc;
 
 use crate::tok_flags::{IS_AT_BOL, LF_AFTER, WS_BEFORE};
@@ -103,11 +104,29 @@ pub enum T {
     struct_ident,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct SourceLoc {
+    file: Rc<String>,
+    line: i32,
+    column: i32,
+}
+
+impl Default for SourceLoc {
+    fn default() -> Self {
+        SourceLoc {
+            file: Rc::new("".to_string()),
+            line: 0,
+            column: 0
+        }
+    }
+}
+
 #[derive(PartialEq, Eq, Clone)]
 pub struct Token {
     pub(crate) tp: T,
     pub(crate) value: Rc<String>,
     pub(crate) pos: i32,
+    pub(crate) loc: SourceLoc, // file,line,column
 }
 
 impl<'a> Default for Token {
@@ -116,6 +135,17 @@ impl<'a> Default for Token {
             tp: T::TOKEN_ERROR,
             value: Rc::new("".to_string()),
             pos: 0,
+            loc: SourceLoc::default(),
+        }
+    }
+}
+
+impl SourceLoc {
+    pub fn new(file: Rc<String>, line: i32, column: i32) -> Self {
+        SourceLoc {
+            file,
+            line,
+            column
         }
     }
 }
@@ -139,34 +169,42 @@ impl fmt::Debug for Token {
             flag.push_str("BOL");
         }
 
+        // TODO: normal column offset from value length.
+        let loc = format!("{}:{}:{}"
+                          , &self.loc.file
+                          , &self.loc.line
+                          , &self.loc.column);
+
         f.debug_struct("Token")
             .field("tp", &self.tp)
             .field("value", &self.value)
             .field("pos", &flag)
+            .field("loc", &loc)
             .finish()
     }
 }
 
 impl<'a> Token {
-    fn new(tp: T, value: &'a str) -> Self {
+    pub(crate) fn new(tp: T, value: String, loc: SourceLoc) -> Self {
         Token {
             tp,
-            value: Rc::new(value.to_string()),
+            value: Rc::new(value),
             pos: 0,
+            loc
         }
     }
 
 
     pub(crate) fn make_eof() -> Self {
-        Token { tp: T::TOKEN_EOF, value: Rc::new("".to_string()), pos: 0 }
+        Token { tp: T::TOKEN_EOF, value: Rc::new("".to_string()), pos: 0, loc: SourceLoc::default() }
     }
 
     pub(crate) fn make_ws() -> Self {
-        Token { tp: T::TOKEN_WS, value: Rc::new(" ".to_string()), pos: 0 }
+        Token { tp: T::TOKEN_WS, value: Rc::new(" ".to_string()), pos: 0, loc: SourceLoc::default() }
     }
 
     pub(crate) fn make_lf() -> Self {
-        Token { tp: T::TOKEN_LF, value: Rc::new("\n".to_string()), pos: 0 }
+        Token { tp: T::TOKEN_LF, value: Rc::new("\n".to_string()), pos: 0, loc: SourceLoc::default() }
     }
 
     pub(crate) fn is(&self, tp: T) -> bool {

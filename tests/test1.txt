@@ -1,3 +1,5 @@
+/// This is the main function.
+/// And this comment documents it.
 fn main() {
     let s = "
         some
