@@ -87,10 +87,19 @@ fn read_file(filename: &str) -> String {
     return input;
 }
 
-fn main() {
-    let filename = "./tests/test1.txt".to_string();
+fn tokenize_file(filename: &String) -> Vec<Token> {
     let content = read_file(filename.as_str());
-    let tokenlist: Vec<Token> = tokenizer::tokenize(&filename.clone(), &content);
+    tokenizer::tokenize(&filename.clone(), &content)
+}
+
+fn tokenize_string(content: &String) -> Vec<Token> {
+    let filename = "<string-input>".to_string();
+    tokenizer::tokenize(&filename, &content)
+}
+
+fn main() {
+    let filename = "./resources/test_data/test1.txt".to_string();
+    let tokenlist = tokenize_file(&filename);
 
     for tok in &tokenlist {
         if tok.has_leading_ws() {
@@ -108,8 +117,22 @@ fn main() {
         println!("{:?}", t);
     }
 
+    // An amazing example of how to save and restore parse-state.
+    // If we want to look-ahead, while parsing.
+    // let mut parser = Parse::new(&tokenlist);
+    // let mut saved = parser.clone();
+    //
+    // let mut tok = parser.move_next();
+    // tok = parser.move_next();
+    //
+    // std::mem::replace(&mut parser, saved);
+    // tok = parser.move_next();
+
     println!("\n:ok:\n");
 }
+
+
+
 
 
 
