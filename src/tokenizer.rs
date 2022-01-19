@@ -81,8 +81,7 @@ fn next<'a>(file_name: &String, buffer: &mut CBuf
     // identifiers
 
     if ascii_util::is_letter(c1) {
-        // TODO: this source-location is not clean, because we use peek
-        let sloc = SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column);
+
         let mut sb = String::new();
 
         while !buffer.is_eof() {
@@ -93,6 +92,9 @@ fn next<'a>(file_name: &String, buffer: &mut CBuf
             }
             sb.push(buffer.next() as char);
         }
+
+        // Let's build the column offset.
+        let sloc = build_sloc(&file_name, &buffer, &sb);
 
         if keywords.contains_key(sb.as_str()) {
             let tp = keywords.get(sb.as_str()).unwrap();
@@ -106,8 +108,6 @@ fn next<'a>(file_name: &String, buffer: &mut CBuf
 
     if ascii_util::is_op_start(c1) {
 
-        let sloc = SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column);
-
         // 3
         let mut three = String::from(c1 as char);
         three.push(c2 as char);
@@ -119,7 +119,10 @@ fn next<'a>(file_name: &String, buffer: &mut CBuf
             buffer.next();
 
             let tp = punct_map_3.get(three.as_str()).unwrap();
-            return Token::new(tp.clone(), three, sloc);
+            return Token::new(tp.clone()
+                , three.clone()
+                , build_sloc(&file_name, &buffer, &three.clone())
+            );
         }
 
         // 2
@@ -131,7 +134,10 @@ fn next<'a>(file_name: &String, buffer: &mut CBuf
             buffer.next();
 
             let tp = punct_map_2.get(two.as_str()).unwrap();
-            return Token::new(tp.clone(), two, sloc);
+            return Token::new(tp.clone()
+                , two.clone()
+                , build_sloc(&file_name, &buffer, &two.clone())
+            );
         }
 
         // 1
@@ -141,7 +147,10 @@ fn next<'a>(file_name: &String, buffer: &mut CBuf
             buffer.next();
 
             let tp = punct_map_1.get(one.as_str()).unwrap();
-            return Token::new(tp.clone(), one, sloc);
+            return Token::new(tp.clone()
+                , one.clone()
+                , build_sloc(&file_name, &buffer, &one.clone())
+            );
         }
 
         panic!("unknown operator {}", three);
@@ -311,3 +320,14 @@ pub fn tokenize<'a>(file_name: &String, s: &str) -> Vec<Token> {
 
     return tokenlist;
 }
+
+fn build_sloc(file_name: &String, buffer: &CBuf, sb: &String) -> SourceLoc {
+    let mut col = buffer.column;
+    let len = sb.len() as i32;
+    let mut offs = buffer.column as i32;
+    if col >= len {
+        offs = col - len + 1;
+    }
+    return SourceLoc::new(Rc::new(file_name.clone()), buffer.line, offs);
+}
+

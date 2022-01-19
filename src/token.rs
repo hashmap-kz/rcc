@@ -170,9 +170,10 @@ impl fmt::Debug for Token {
         }
 
         // TODO: normal column offset from value length.
-        let loc = format!("{}:{}"
+        let loc = format!("{}:{}:{}"
                           , &self.loc.file
-                          , &self.loc.line);
+                          , &self.loc.line
+                          , &self.loc.column);
 
         f.debug_struct("Token")
             .field("tp", &self.tp)
