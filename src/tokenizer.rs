@@ -49,7 +49,9 @@ fn next<'a>(file_name: &String, buffer: &mut CBuf
             while !buffer.is_eof() {
                 let tmp = buffer.next();
                 if tmp == b'\n' {
-                    return Token::new(T::TOKEN_COMMENT, comments, sloc);
+                    // TODO: doc. comments
+                    // return Token::new(T::TOKEN_COMMENT, comments, sloc);
+                    return Token::make_lf();
                 }
 
                 if tmp == b'\0' {
@@ -61,8 +63,6 @@ fn next<'a>(file_name: &String, buffer: &mut CBuf
         } else if c2 == b'*' {
             buffer.next();
             buffer.next();
-
-            let sloc = SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column);
 
             let mut prev = b'\0';
             while !buffer.is_eof() {
@@ -81,7 +81,10 @@ fn next<'a>(file_name: &String, buffer: &mut CBuf
     // identifiers
 
     if ascii_util::is_letter(c1) {
+        // TODO: this source-location is not clean, because we use peek
+        let sloc = SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column);
         let mut sb = String::new();
+
         while !buffer.is_eof() {
             let peek1 = buffer.peek_1();
             let is_identifier_tail = ascii_util::is_letter(peek1) || ascii_util::is_dec(peek1);
@@ -93,25 +96,17 @@ fn next<'a>(file_name: &String, buffer: &mut CBuf
 
         if keywords.contains_key(sb.as_str()) {
             let tp = keywords.get(sb.as_str()).unwrap();
-            return Token {
-                tp: tp.clone(),
-                value: Rc::new(sb),
-                pos: 0,
-                loc: SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column)
-            };
+            return Token::new(tp.clone(), sb, sloc);
         }
 
-        return Token {
-            tp: T::TOKEN_IDENT,
-            value: Rc::new(sb),
-            pos: 0,
-            loc: SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column)
-        };
+        return Token::new(T::TOKEN_IDENT, sb, sloc);
     }
 
     // operators
 
     if ascii_util::is_op_start(c1) {
+
+        let sloc = SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column);
 
         // 3
         let mut three = String::from(c1 as char);
@@ -124,12 +119,7 @@ fn next<'a>(file_name: &String, buffer: &mut CBuf
             buffer.next();
 
             let tp = punct_map_3.get(three.as_str()).unwrap();
-            return Token {
-                tp: tp.clone(),
-                value: Rc::new(three.to_string()),
-                pos: 0,
-                loc: SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column)
-            };
+            return Token::new(tp.clone(), three, sloc);
         }
 
         // 2
@@ -141,12 +131,7 @@ fn next<'a>(file_name: &String, buffer: &mut CBuf
             buffer.next();
 
             let tp = punct_map_2.get(two.as_str()).unwrap();
-            return Token {
-                tp: tp.clone(),
-                value: Rc::new(two.to_string()),
-                pos: 0,
-                loc: SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column)
-            };
+            return Token::new(tp.clone(), two, sloc);
         }
 
         // 1
@@ -156,12 +141,7 @@ fn next<'a>(file_name: &String, buffer: &mut CBuf
             buffer.next();
 
             let tp = punct_map_1.get(one.as_str()).unwrap();
-            return Token {
-                tp: tp.clone(),
-                value: Rc::new(one.to_string()),
-                pos: 0,
-                loc: SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column)
-            };
+            return Token::new(tp.clone(), one, sloc);
         }
 
         panic!("unknown operator {}", three);
@@ -171,6 +151,7 @@ fn next<'a>(file_name: &String, buffer: &mut CBuf
 
     if ascii_util::is_dec(c1) {
         let mut sb = String::new();
+        let sloc = SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column);
 
         while !buffer.is_eof() {
             let mut peekc = buffer.peek_1();
@@ -193,17 +174,11 @@ fn next<'a>(file_name: &String, buffer: &mut CBuf
             break;
         }
 
-        return Token {
-            tp: T::TOKEN_NUMBER,
-            value: Rc::new(sb),
-            pos: 0,
-            loc: SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column)
-        };
+        return Token::new(T::TOKEN_NUMBER, sb, sloc);
     }
 
     // string, char
     if c1 == b'\"' || c1 == b'\'' {
-
         let end = buffer.next(); // skip the quote
         let sloc = SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column);
 
@@ -238,20 +213,10 @@ fn next<'a>(file_name: &String, buffer: &mut CBuf
         repr.push(end as char);
 
         if end == b'\"' {
-            return Token {
-                tp: T::TOKEN_STRING,
-                value: Rc::new(repr),
-                pos: 0,
-                loc: sloc
-            };
+            return Token::new(T::TOKEN_STRING, repr, sloc);
         }
 
-        return Token {
-            tp: T::TOKEN_CHAR,
-            value: Rc::new(repr),
-            pos: 0,
-            loc: sloc
-        };
+        return Token::new(T::TOKEN_CHAR, repr, sloc);
     }
 
     // other ASCII
@@ -265,7 +230,7 @@ fn next<'a>(file_name: &String, buffer: &mut CBuf
             tp: tp.clone(),
             value: Rc::new(one.to_string()),
             pos: 0,
-            loc: SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column)
+            loc: SourceLoc::new(Rc::new(file_name.clone()), buffer.line, buffer.column),
         };
     }
 
