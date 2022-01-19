@@ -3,9 +3,11 @@
 #![allow(unused_imports)]
 #![allow(unused_mut)]
 
+use std::{fmt, io};
 use std::borrow::Borrow;
 use std::collections::HashMap;
-use std::fmt;
+use std::fs::File;
+use std::io::Read;
 use std::rc::Rc;
 use std::thread::current;
 
@@ -76,8 +78,18 @@ impl<'a> Parse<'a> {
     }
 }
 
+fn read_file(filename: &str) -> String {
+    let mut input = String::new();
+    let mut fp = io::stdin();
+    let mut fp = File::open(filename).expect("file not found");
+    fp.read_to_string(&mut input)
+        .expect("an internal error, cannot read the file");
+    return input;
+}
+
 fn main() {
-    let tokenlist: Vec<Token> = tokenizer::tokenize("fn main() {\n do{}while(0); let s = \"...\";\n let c = '.';\n return 0 ;\n }\n ");
+    let content = read_file("./tests/test1.txt");
+    let tokenlist: Vec<Token> = tokenizer::tokenize(&content);
 
     for tok in &tokenlist {
         if tok.has_leading_ws() {
@@ -94,8 +106,6 @@ fn main() {
         let t = parser.move_next();
         println!("{:?}", t);
     }
-
-    println!("{}", T::TOKEN_IDENT as i32);
 
     println!("\n:ok:\n");
 }

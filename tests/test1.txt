@@ -1,0 +1,8 @@
+fn main() {
+    let s = "
+        some
+        string
+        here
+    ";
+    return 0;
+}

@@ -207,7 +207,7 @@ fn next<'a>(buffer: &mut CBuf
                 panic!("unclosed string");
             }
             if next == b'\n' {
-                panic!("end of line in string");
+                // panic!("end of line in string");
             }
             if next == end {
                 break;
