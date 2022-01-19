@@ -19,9 +19,30 @@ impl CBuf {
     ///
     pub fn create(string: &String) -> Self {
         let mut res: Vec<u8> = Vec::new();
-        for c in string.as_bytes() {
-            res.push(*c);
+        let content = string.as_bytes();
+
+        // Ignore the BOM, if any.
+        let mut offset = 0_usize;
+        if content.len() > 3 {
+            if content[0] == 0xef && content[1] == 0xbb && content[2] == 0xbf {
+                println!("{}", "Warning: BOM file");
+                offset = 3;
+            }
         }
+
+        let mut last_char = b'\0';
+        for i in offset..content.len() {
+            let c = content[i];
+            res.push(c);
+            last_char = c;
+        }
+
+        // Let's append LF, if it wasn't the last byte in the source-code.
+        if last_char != b'\n' {
+            println!("{}", "Warning: no new-line at the end of the file");
+            res.push(b'\n');
+        }
+
         for _ in 0..8 {
             res.push(b'\0');
         }
