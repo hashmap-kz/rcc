@@ -67,6 +67,10 @@ impl Tokenizer {
         );
     }
 
+    fn create_token_spec_loc(&self, tp: T, sb: &String, loc: SourceLoc) -> Token {
+        return Token::new(tp.clone(), sb.clone(), loc);
+    }
+
     pub fn next(&mut self) -> Token
     {
         let mut buffer = &mut self.buffer;
@@ -232,6 +236,10 @@ impl Tokenizer {
         if c1 == b'\"' || c1 == b'\'' {
             let end = buffer.next(); // skip the quote
 
+            let line = buffer.line;
+            let column = buffer.column;
+            let loc = SourceLoc::new(self.file_name.clone(), line, column);
+
             let mut sb = String::new();
             while !buffer.is_eof() {
                 let next = buffer.next();
@@ -263,10 +271,10 @@ impl Tokenizer {
             repr.push(end as char);
 
             if end == b'\"' {
-                return self.create_token(T::TOKEN_STRING, &repr);
+                return self.create_token_spec_loc(T::TOKEN_STRING, &repr, loc);
             }
 
-            return self.create_token(T::TOKEN_CHAR, &repr);
+            return self.create_token_spec_loc(T::TOKEN_CHAR, &repr, loc);
         }
 
         // other ASCII
@@ -279,7 +287,7 @@ impl Tokenizer {
             return self.create_token(tp.clone(), &one);
         }
 
-        panic!("unimplemented: {}", c1 as char);
+        panic!("unimplemented: {}, line: {}", c1 as char, buffer.line);
     }
 
 
