@@ -6,5 +6,39 @@ fn main() {
         string
         here
     ";
+    for oneline in lines {
+        let mut tmp = String::new();
+        let mut first = true;
+
+        for t in oneline {
+            if t.is(T::TOKEN_EOF) {
+                break;
+            }
+
+            if t.is(T::T_RIGHT_BRACE) {
+                level -= 1;
+            }
+
+            if first {
+                // write!(a, "{}", 5).unwrap();
+                let line = t.loc.line;
+                write!(tmp, "{:>3}|", line).unwrap();
+                write!(tmp, "{}", pad(level));
+                first = false;
+            }
+
+            if t.has_leading_ws() {
+                tmp.push_str(" ");
+            }
+            let value = &*t.value.clone();
+            tmp.push_str(&value);
+
+            if t.is(T::T_LEFT_BRACE) {
+                level += 1;
+            }
+        }
+        tmp.push_str("\n");
+        sb.push_str(&*tmp);
+    }
     return 0; /*"*/
 }

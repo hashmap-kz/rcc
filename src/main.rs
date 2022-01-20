@@ -6,8 +6,10 @@
 use std::{fmt, io};
 use std::borrow::Borrow;
 use std::collections::HashMap;
+use std::fmt::Write;
 use std::fs::File;
 use std::io::Read;
+use std::ops::Deref;
 use std::rc::Rc;
 use std::thread::current;
 
@@ -79,6 +81,68 @@ impl<'a> Parse<'a> {
     }
 }
 
+fn pad(level: usize) -> String {
+    let mut sb = String::new();
+    for _ in 0..level {
+        sb.push_str("  ");
+    }
+    return sb;
+}
+
+fn tokenlist_to_string_loc(tokens: &Vec<Token>) -> String {
+    let mut lines: Vec<Vec<Token>> = Vec::new();
+    let mut line: Vec<Token> = Vec::new();
+    let mut sb = String::new();
+    let mut level = 0;
+
+    for t in tokens {
+        line.push(t.clone());
+        if t.has_newline_after() {
+            lines.push(line);
+            line = Vec::new();
+        }
+    }
+    if !line.is_empty() {
+        lines.push(line);
+        line = Vec::new();
+    }
+
+    for oneline in lines {
+        let mut tmp = String::new();
+        let mut first = true;
+
+        for t in oneline {
+            if t.is(T::TOKEN_EOF) {
+                break;
+            }
+
+            if t.is(T::T_RIGHT_BRACE) {
+                level -= 1;
+            }
+
+            if first {
+                let line = t.loc.line;
+                write!(tmp, "{:>3}|", line).unwrap();
+                write!(tmp, "{}", pad(level));
+                first = false;
+            }
+
+            if t.has_leading_ws() {
+                tmp.push_str(" ");
+            }
+            let value = &*t.value.clone();
+            tmp.push_str(&value);
+
+            if t.is(T::T_LEFT_BRACE) {
+                level += 1;
+            }
+        }
+        tmp.push_str("\n");
+        sb.push_str(&*tmp);
+    }
+
+    return sb;
+}
 
 fn main() {
     let filename = "./resources/test_data/test1.txt".to_string();
@@ -99,6 +163,9 @@ fn main() {
         let t = parser.move_next();
         println!("{:?}", t);
     }
+
+    let printable = tokenlist_to_string_loc(&tokenlist);
+    println!("{}", printable);
 
     // An amazing example of how to save and restore parse-state.
     // If we want to look-ahead, while parsing.

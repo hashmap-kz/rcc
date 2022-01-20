@@ -110,9 +110,9 @@ pub enum T {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SourceLoc {
-    file: Rc<String>,
-    line: i32,
-    column: i32,
+    pub(crate) file: Rc<String>,
+    pub(crate) line: i32,
+    pub(crate) column: i32,
 }
 
 impl Default for SourceLoc {
