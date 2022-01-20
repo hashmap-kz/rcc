@@ -16,6 +16,7 @@ use token::Token;
 
 use crate::cbuf::CBuf;
 use crate::token::T;
+use crate::tokenizer::Tokenizer;
 
 mod cbuf;
 mod ascii_util;
@@ -78,28 +79,10 @@ impl<'a> Parse<'a> {
     }
 }
 
-fn read_file(filename: &str) -> String {
-    let mut input = String::new();
-    let mut fp = io::stdin();
-    let mut fp = File::open(filename).expect("file not found");
-    fp.read_to_string(&mut input)
-        .expect("an internal error, cannot read the file");
-    return input;
-}
-
-fn tokenize_file(filename: &String) -> Vec<Token> {
-    let content = read_file(filename.as_str());
-    tokenizer::tokenize(&filename.clone(), &content)
-}
-
-fn tokenize_string(content: &String) -> Vec<Token> {
-    let filename = "<string-input>".to_string();
-    tokenizer::tokenize(&filename, &content)
-}
 
 fn main() {
     let filename = "./resources/test_data/test1.txt".to_string();
-    let tokenlist = tokenize_file(&filename);
+    let tokenlist = Tokenizer::new_from_file(filename.to_string()).tokenize();
 
     for tok in &tokenlist {
         if tok.has_leading_ws() {
