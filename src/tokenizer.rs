@@ -86,6 +86,7 @@ impl Tokenizer {
             return Token::make_eof();
         }
 
+        // TODO: unicode whitespaces
         if c1 == b' ' || c1 == b'\t' {
             buffer.next();
             return Token::make_ws();
@@ -97,7 +98,7 @@ impl Tokenizer {
         }
 
         // comments // and /**/
-
+        // TODO: doc.comments, begin location for error handling.
         if c1 == b'/' {
             if c2 == b'/' {
                 let mut comments = String::new();
@@ -115,7 +116,7 @@ impl Tokenizer {
                     }
 
                     if tmp == b'\0' {
-                        panic!("no new-line at end of file...");
+                        panic!("no new-line at end of file..."); // TODO: location here
                     }
 
                     comments.push(tmp as char);
@@ -128,7 +129,7 @@ impl Tokenizer {
                 while !buffer.is_eof() {
                     let tmp = buffer.next();
                     if tmp == b'\0' {
-                        panic!("unclosed comment");
+                        panic!("unclosed comment"); // TODO: location here
                     }
                     if tmp == b'/' && prev == b'*' {
                         return Token::make_ws();
@@ -200,11 +201,11 @@ impl Tokenizer {
                 return self.create_token(tp.clone(), &one);
             }
 
-            panic!("unknown operator {}", three);
+            panic!("unknown operator {}", three); // TODO: location here
         }
 
         // numbers
-
+        // TODO: here we have to handle range patterns: 0..10, 0..=10, etc...
         if ascii_util::is_dec(c1) {
             let mut sb = String::new();
 
@@ -233,6 +234,7 @@ impl Tokenizer {
         }
 
         // string, char
+        // TODO: here we have to handle lifetime patterns: 'a, 'static, etc...
         if c1 == b'\"' || c1 == b'\'' {
             let end = buffer.next(); // skip the quote
 
@@ -245,7 +247,7 @@ impl Tokenizer {
                 let next = buffer.next();
 
                 if next == b'\0' {
-                    panic!("unclosed string");
+                    panic!("unclosed string"); // TODO: location here
                 }
                 if next == b'\n' {
                     // panic!("end of line in string");
