@@ -20,9 +20,11 @@ pub fn make_maps() -> (HashMap<&'static str, T>, HashMap<&'static str, T>, HashM
     punct_map_3.insert(">>=", T::T_RSHIFT_EQUAL);
     punct_map_3.insert("<<=", T::T_LSHIFT_EQUAL);
     punct_map_3.insert("...", T::T_DOT_DOT_DOT);
+    punct_map_3.insert("..=", T::T_DOT_DOT_EQ);
 
     // 2
     punct_map_2.insert("->", T::T_ARROW);
+    punct_map_2.insert("=>", T::T_ARROW2);
     punct_map_2.insert("--", T::T_MINUS_MINUS);
     punct_map_2.insert("-=", T::T_MINUS_EQUAL);
     punct_map_2.insert("!=", T::T_NE);
