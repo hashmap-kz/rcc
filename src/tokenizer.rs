@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io;
@@ -7,7 +8,7 @@ use std::rc::Rc;
 use crate::{ascii_util, tok_maps};
 use crate::cbuf::CBuf;
 use crate::tok_flags::{IS_AT_BOL, LF_AFTER, WS_BEFORE};
-use crate::token::{SourceLoc, T, Token};
+use crate::token::{Ident, SourceLoc, T, Token};
 
 pub struct Tokenizer {
     file_name: Rc<String>,
@@ -16,7 +17,7 @@ pub struct Tokenizer {
     punct_map_2: HashMap<&'static str, T>,
     punct_map_1: HashMap<&'static str, T>,
     punct_map_u: HashMap<&'static str, T>,
-    keywords: HashMap<&'static str, T>,
+    idmap: HashMap<String, Rc<RefCell<Ident>>>,
 }
 
 impl Tokenizer {
@@ -28,7 +29,6 @@ impl Tokenizer {
         let mut punct_map_2 = maps.1;
         let mut punct_map_1 = maps.2;
         let mut punct_map_u = maps.3;
-        let mut keywords = maps.4;
 
         Tokenizer {
             file_name: Rc::new(file_name),
@@ -37,7 +37,7 @@ impl Tokenizer {
             punct_map_2,
             punct_map_1,
             punct_map_u,
-            keywords,
+            idmap: HashMap::new(),
         }
     }
 
@@ -56,7 +56,7 @@ impl Tokenizer {
             punct_map_2,
             punct_map_1,
             punct_map_u,
-            keywords,
+            idmap: HashMap::new(),
         }
     }
 
@@ -153,9 +153,10 @@ impl Tokenizer {
                 sb.push(buffer.next() as char);
             }
 
-            if self.keywords.contains_key(sb.as_str()) {
-                let tp = self.keywords.get(sb.as_str()).unwrap();
-                return self.create_token(tp.clone(), &sb);
+            // Remember the identifier we found.
+            if !self.idmap.contains_key(&sb) {
+                let id = Ident::new(&sb.clone());
+                self.idmap.insert(sb.clone(), Rc::new(RefCell::new(id)));
             }
 
             return self.create_token(T::TOKEN_IDENT, &sb);
@@ -302,6 +303,16 @@ impl Tokenizer {
         while !self.buffer.is_eof() {
             let mut t = self.next();
 
+            if t.is(T::TOKEN_IDENT) {
+                let opt = self.idmap.get(&t.value);
+                if opt.is_none() {
+                    panic!("cannot find the name `{}` in the hash-table", &t.value);
+                }
+
+                let x = opt.unwrap();
+                t.id = Option::from(x.clone());
+            }
+
             if t.is(T::TOKEN_EOF) {
                 for tok in line {
                     tokenlist.push(tok);
@@ -349,6 +360,7 @@ impl Tokenizer {
             line.push(t);
         }
 
+        println!("map len: {}", self.idmap.len());
         return tokenlist;
     }
 

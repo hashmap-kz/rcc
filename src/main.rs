@@ -38,12 +38,16 @@ fn main() {
     let mut parser = Parse::new(&tokenlist);
     while !parser.is_eof() {
         let t = parser.move_next();
-        //println!("{:?}", t);
+        println!("{:?}", t);
+
+        if t.is(T::TOKEN_IDENT) {
+            let x = t.id.as_ref().unwrap();
+        }
     }
 
     // How to flush a list of tokens to stderr.
-    let printable = tok_printer::tokens_to_string_loc(&tokenlist);
-    println!("{}", printable);
+    // let printable = tok_printer::tokens_to_string_loc(&tokenlist);
+    // println!("{}", printable);
 
 
     println!("\n:ok:\n");

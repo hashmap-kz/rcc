@@ -4,6 +4,7 @@ use std::rc::Rc;
 
 use crate::tok_flags::{IS_AT_BOL, LF_AFTER, WS_BEFORE};
 use crate::token::T::TOKEN_IDENT;
+use std::cell::RefCell;
 
 #[derive(Debug, PartialOrd, PartialEq, Eq, Clone)]
 #[allow(non_camel_case_types)]
@@ -15,6 +16,8 @@ pub enum T {
     TOKEN_WS,
     TOKEN_LF,
 
+    // General identifier, may be a user-defined-name, or a keyword.
+    TOKEN_IDENT,
     TOKEN_NUMBER,
     TOKEN_CHAR,
     TOKEN_STRING,
@@ -80,32 +83,6 @@ pub enum T {
     T_GRAVE_ACCENT,   // `
     T_BACKSLASH,      // \
 
-    // Keywords
-
-    // General identifier, may be a user-defined-name, or a keyword.
-    TOKEN_IDENT,
-
-    break_ident,
-    continue_ident,
-    do_ident,
-    else_ident,
-    for_ident,
-    if_ident,
-    return_ident,
-    while_ident,
-    static_ident,
-    pub_ident,
-    true_ident,
-    false_ident,
-    self_ident,
-    default_ident,
-    static_assert_ident,
-    assert_true_ident,
-    char_ident,
-    u8_ident,
-    i32_ident,
-    bool_ident,
-    struct_ident,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -125,21 +102,36 @@ impl Default for SourceLoc {
     }
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct Ident {
+    name: String,
+}
+
+impl Ident {
+    pub fn new(name: &String) -> Self {
+        Ident {
+            name: name.to_string()
+        }
+    }
+}
+
 #[derive(PartialEq, Eq, Clone)]
 pub struct Token {
     pub(crate) tp: T,
-    pub(crate) value: Rc<String>,
+    pub(crate) value: String,
     pub(crate) pos: i32,
-    pub(crate) loc: SourceLoc, // file,line,column
+    pub(crate) loc: SourceLoc, 
+    pub id: Option<Rc<RefCell<Ident>>>,
 }
 
 impl<'a> Default for Token {
     fn default() -> Self {
         Token {
             tp: T::TOKEN_ERROR,
-            value: Rc::new("".to_string()),
+            value: "".to_string(),
             pos: 0,
             loc: SourceLoc::default(),
+            id: None
         }
     }
 }
@@ -184,6 +176,7 @@ impl fmt::Debug for Token {
             .field("value", &self.value)
             .field("pos", &flag)
             .field("loc", &loc)
+            .field("id", &self.id)
             .finish()
     }
 }
@@ -192,23 +185,24 @@ impl<'a> Token {
     pub(crate) fn new(tp: T, value: String, loc: SourceLoc) -> Self {
         Token {
             tp,
-            value: Rc::new(value),
+            value: value.clone(),
             pos: 0,
-            loc
+            loc,
+            id: None
         }
     }
 
 
     pub(crate) fn make_eof() -> Self {
-        Token { tp: T::TOKEN_EOF, value: Rc::new("".to_string()), pos: 0, loc: SourceLoc::default() }
+        Token { tp: T::TOKEN_EOF, value: "".to_string(), pos: 0, loc: SourceLoc::default(), id: None }
     }
 
     pub(crate) fn make_ws() -> Self {
-        Token { tp: T::TOKEN_WS, value: Rc::new(" ".to_string()), pos: 0, loc: SourceLoc::default() }
+        Token { tp: T::TOKEN_WS, value: " ".to_string(), pos: 0, loc: SourceLoc::default(), id: None }
     }
 
     pub(crate) fn make_lf() -> Self {
-        Token { tp: T::TOKEN_LF, value: Rc::new("\n".to_string()), pos: 0, loc: SourceLoc::default() }
+        Token { tp: T::TOKEN_LF, value: "\n".to_string(), pos: 0, loc: SourceLoc::default(), id: None }
     }
 
     pub(crate) fn is(&self, tp: T) -> bool {
