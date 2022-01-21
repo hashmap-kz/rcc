@@ -17,7 +17,9 @@ pub struct Tokenizer {
     punct_map_2: HashMap<&'static str, T>,
     punct_map_1: HashMap<&'static str, T>,
     punct_map_u: HashMap<&'static str, T>,
+
     idmap: HashMap<String, Rc<RefCell<Ident>>>,
+    id_counter: usize,
 }
 
 impl Tokenizer {
@@ -38,6 +40,7 @@ impl Tokenizer {
             punct_map_1,
             punct_map_u,
             idmap: HashMap::new(),
+            id_counter: 0
         }
     }
 
@@ -57,6 +60,7 @@ impl Tokenizer {
             punct_map_1,
             punct_map_u,
             idmap: HashMap::new(),
+            id_counter: 0
         }
     }
 
@@ -153,10 +157,24 @@ impl Tokenizer {
                 sb.push(buffer.next() as char);
             }
 
-            // Remember the identifier we found.
+            // Put the identifier we found in the hash.
+            //
+            // All identifiers are shared between tokens.
+            // Each identifier is actually a unique pointer.
+            // For example: we have a loop in its simple form: for(int i=0; i<10; i+=1) {}
+            // The 'i' as an identifier will be presented in the hash once.
+            // The 'i' as a token will be presented three times, and each token will has a ref
+            // to the 'i' identifier, which is unique through the whole program, and contains a
+            // useful information about the 'named-identifier'. It may be a keyword, it may be a
+            // macro-name, it may be a special symbol, etc... So: we do not have to store somewhere
+            // a special hash-table for names if we can bind each name with a token in the
+            // token-tree. This simple trick works fine in C, with a raw-pointers, where we can
+            // compare these identifiers as a pointers, and not as strings.
+            //
             if !self.idmap.contains_key(&sb) {
-                let id = Ident::new(&sb.clone());
+                let id = Ident::new(&sb.clone(), self.id_counter);
                 self.idmap.insert(sb.clone(), Rc::new(RefCell::new(id)));
+                self.id_counter += 1;
             }
 
             return self.create_token(T::TOKEN_IDENT, &sb);

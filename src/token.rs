@@ -1,11 +1,12 @@
+use std::cell::RefCell;
 use std::fmt;
 use std::fmt::Write;
 use std::rc::Rc;
 
-use crate::tok_flags::{IS_AT_BOL, LF_AFTER, WS_BEFORE};
+use crate::tok_flags::{ IS_AT_BOL, LF_AFTER, WS_BEFORE};
 use crate::token::T::TOKEN_IDENT;
-use std::cell::RefCell;
 
+//@formatter:off
 #[derive(Debug, PartialOrd, PartialEq, Eq, Clone)]
 #[allow(non_camel_case_types)]
 pub enum T {
@@ -84,6 +85,7 @@ pub enum T {
     T_BACKSLASH,      // \
 
 }
+//@formatter:on
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SourceLoc {
@@ -97,20 +99,35 @@ impl Default for SourceLoc {
         SourceLoc {
             file: Rc::new("".to_string()),
             line: 0,
-            column: 0
+            column: 0,
         }
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct MetaSym {
+    stub: i32,
+}
+
+impl Default for MetaSym {
+    fn default() -> Self {
+        MetaSym { stub: 0 }
     }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Ident {
     name: String,
+    uid: usize,
+    sym: Option<MetaSym>,
 }
 
 impl Ident {
-    pub fn new(name: &String) -> Self {
+    pub fn new(name: &String, uid: usize) -> Self {
         Ident {
-            name: name.to_string()
+            name: name.to_string(),
+            uid,
+            sym: None,
         }
     }
 }
@@ -120,7 +137,7 @@ pub struct Token {
     pub(crate) tp: T,
     pub(crate) value: String,
     pub(crate) pos: i32,
-    pub(crate) loc: SourceLoc, 
+    pub(crate) loc: SourceLoc,
     pub id: Option<Rc<RefCell<Ident>>>,
 }
 
@@ -131,7 +148,7 @@ impl<'a> Default for Token {
             value: "".to_string(),
             pos: 0,
             loc: SourceLoc::default(),
-            id: None
+            id: None,
         }
     }
 }
@@ -141,7 +158,7 @@ impl SourceLoc {
         SourceLoc {
             file,
             line,
-            column
+            column,
         }
     }
 }
@@ -171,12 +188,19 @@ impl fmt::Debug for Token {
                           , &self.loc.line
                           , &self.loc.column);
 
+        let mut ident = String::from("");
+        if self.is(T::TOKEN_IDENT) {
+            let x = self.id.as_ref().unwrap().borrow();
+            ident = String::from("");
+            write!(ident, "{} :{}", x.name.clone(), x.uid).unwrap();
+        }
+
         f.debug_struct("Token")
             .field("tp", &self.tp)
             .field("value", &self.value)
             .field("pos", &flag)
             .field("loc", &loc)
-            .field("id", &self.id)
+            .field("id", &ident)
             .finish()
     }
 }
@@ -188,7 +212,7 @@ impl<'a> Token {
             value: value.clone(),
             pos: 0,
             loc,
-            id: None
+            id: None,
         }
     }
 
