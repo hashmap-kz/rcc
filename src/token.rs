@@ -123,9 +123,9 @@ pub struct Ident {
 }
 
 impl Ident {
-    pub fn new(name: &String, uid: usize) -> Self {
+    pub fn new(name: String, uid: usize) -> Self {
         Ident {
-            name: name.to_string(),
+            name,
             uid,
             sym: None,
         }
@@ -141,7 +141,7 @@ pub struct Token {
     pub id: Option<Rc<RefCell<Ident>>>,
 }
 
-impl<'a> Default for Token {
+impl Default for Token {
     fn default() -> Self {
         Token {
             tp: T::TOKEN_ERROR,
@@ -205,11 +205,11 @@ impl fmt::Debug for Token {
     }
 }
 
-impl<'a> Token {
+impl Token {
     pub(crate) fn new(tp: T, value: String, loc: SourceLoc) -> Self {
         Token {
             tp,
-            value: value.clone(),
+            value,
             pos: 0,
             loc,
             id: None,

@@ -1,6 +1,23 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::rc::Rc;
 
-use crate::token::T;
+use crate::token::{Ident, T};
+
+#[derive(Debug, Eq, PartialEq)]
+pub struct Keywords {
+    pub(crate) fn_ident: Rc<RefCell<Ident>>,
+    pub(crate) let_ident: Rc<RefCell<Ident>>,
+}
+
+impl Keywords {
+    pub(crate) fn new() -> Self {
+        Keywords {
+            fn_ident: Rc::new(RefCell::new(Ident::new("fn".to_string(), 1024))),
+            let_ident: Rc::new(RefCell::new(Ident::new("let".to_string(), 1025))),
+        }
+    }
+}
 
 pub fn make_maps() -> (HashMap<&'static str, T>, HashMap<&'static str, T>, HashMap<&'static str, T>, HashMap<&'static str, T>, HashMap<&'static str, T>) {
     let mut punct_map_3: HashMap<&str, T> = HashMap::new();

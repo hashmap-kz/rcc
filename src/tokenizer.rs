@@ -8,6 +8,7 @@ use std::rc::Rc;
 use crate::{ascii_util, tok_maps};
 use crate::cbuf::CBuf;
 use crate::tok_flags::{IS_AT_BOL, LF_AFTER, WS_BEFORE};
+use crate::tok_maps::Keywords;
 use crate::token::{Ident, SourceLoc, T, Token};
 
 pub struct Tokenizer {
@@ -23,8 +24,12 @@ pub struct Tokenizer {
 }
 
 impl Tokenizer {
-    pub fn new_from_file(file_name: String) -> Self {
+    pub fn new_from_file(file_name: String, keywords: &Keywords) -> Self {
         let content = read_file(&file_name);
+
+        let mut idmap = HashMap::new();
+        idmap.insert("fn".to_string(), Rc::clone(&keywords.fn_ident));
+        idmap.insert("let".to_string(), Rc::clone(&keywords.let_ident));
 
         let maps = tok_maps::make_maps();
         let mut punct_map_3 = maps.0;
@@ -39,7 +44,7 @@ impl Tokenizer {
             punct_map_2,
             punct_map_1,
             punct_map_u,
-            idmap: HashMap::new(),
+            idmap,
             id_counter: 0
         }
     }
@@ -172,7 +177,7 @@ impl Tokenizer {
             // compare these identifiers as a pointers, and not as strings.
             //
             if !self.idmap.contains_key(&sb) {
-                let id = Ident::new(&sb.clone(), self.id_counter);
+                let id = Ident::new(sb.clone(), self.id_counter);
                 self.idmap.insert(sb.clone(), Rc::new(RefCell::new(id)));
                 self.id_counter += 1;
             }
