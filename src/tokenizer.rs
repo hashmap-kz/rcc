@@ -24,12 +24,8 @@ pub struct Tokenizer {
 }
 
 impl Tokenizer {
-    pub fn new_from_file(file_name: String, keywords: &Keywords) -> Self {
+    pub fn new_from_file(file_name: String, keywords: &Keywords, idmap: HashMap<String, Rc<RefCell<Ident>>>) -> Self {
         let content = read_file(&file_name);
-
-        let mut idmap = HashMap::new();
-        idmap.insert("fn".to_string(), Rc::clone(&keywords.fn_ident));
-        idmap.insert("let".to_string(), Rc::clone(&keywords.let_ident));
 
         let maps = tok_maps::make_maps();
         let mut punct_map_3 = maps.0;
@@ -45,7 +41,7 @@ impl Tokenizer {
             punct_map_1,
             punct_map_u,
             idmap,
-            id_counter: 0
+            id_counter: 8192,
         }
     }
 
@@ -55,7 +51,6 @@ impl Tokenizer {
         let mut punct_map_2 = maps.1;
         let mut punct_map_1 = maps.2;
         let mut punct_map_u = maps.3;
-        let mut keywords = maps.4;
 
         Tokenizer {
             file_name: Rc::new("<string-input>".to_string()),
@@ -65,7 +60,7 @@ impl Tokenizer {
             punct_map_1,
             punct_map_u,
             idmap: HashMap::new(),
-            id_counter: 0
+            id_counter: 8192,
         }
     }
 

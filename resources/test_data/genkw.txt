@@ -1,0 +1,44 @@
+
+use std::fmt::Write;
+
+fn main() {
+    let mut words = vec!["fn", "let", "struct"
+                         , "enum", "if", "else"
+                         , "for", "while", "self"
+                         , "return", "break", "continue"
+                         , "true", "false", "as"];
+    words.sort();
+
+    let mut struct_decl = String::from("pub struct Keywords {\n");
+    for w in &words {
+        write!(struct_decl, "    pub {}_id: Rc<RefCell<Ident>>,\n", w).unwrap();
+    }
+    struct_decl.push_str("}\n");
+    println!("{}", struct_decl);
+
+
+    let mut struct_impl = String::from("impl Keywords {\n");
+    struct_impl.push_str("    pub fn new() -> Self {\n");
+    struct_impl.push_str("        Keywords {\n");
+
+    let mut cnt = 0;
+    for w in &words {
+        write!(struct_impl, "            {}_id: Rc::new(RefCell::new(Ident::new(\"{}\".to_string(), {}))),\n", w, w, cnt).unwrap();
+        cnt += 1;
+    }
+
+    struct_impl.push_str("        }\n");
+    struct_impl.push_str("    }\n");
+    struct_impl.push_str("}\n");
+    println!("{}", struct_impl);
+
+
+    let mut idmap = String::from("fn make_id_map(keywords: &Keywords) -> HashMap<String, Rc<RefCell<Ident>>> {\n");
+    idmap.push_str("    let mut idmap = HashMap::new();\n");
+    for w in &words {
+        write!(idmap, "    idmap.insert(\"{}\".to_string(), Rc::clone(&keywords.{}_id));\n", w, w).unwrap();
+    }
+    idmap.push_str("    return idmap;\n");
+    idmap.push_str("}\n");
+    println!("{}", idmap);
+}

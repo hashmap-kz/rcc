@@ -6,25 +6,50 @@ use crate::token::{Ident, T};
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct Keywords {
-    pub(crate) fn_ident: Rc<RefCell<Ident>>,
-    pub(crate) let_ident: Rc<RefCell<Ident>>,
+    pub as_id: Rc<RefCell<Ident>>,
+    pub break_id: Rc<RefCell<Ident>>,
+    pub continue_id: Rc<RefCell<Ident>>,
+    pub else_id: Rc<RefCell<Ident>>,
+    pub enum_id: Rc<RefCell<Ident>>,
+    pub false_id: Rc<RefCell<Ident>>,
+    pub fn_id: Rc<RefCell<Ident>>,
+    pub for_id: Rc<RefCell<Ident>>,
+    pub if_id: Rc<RefCell<Ident>>,
+    pub let_id: Rc<RefCell<Ident>>,
+    pub return_id: Rc<RefCell<Ident>>,
+    pub self_id: Rc<RefCell<Ident>>,
+    pub struct_id: Rc<RefCell<Ident>>,
+    pub true_id: Rc<RefCell<Ident>>,
+    pub while_id: Rc<RefCell<Ident>>,
 }
 
 impl Keywords {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Keywords {
-            fn_ident: Rc::new(RefCell::new(Ident::new("fn".to_string(), 1024))),
-            let_ident: Rc::new(RefCell::new(Ident::new("let".to_string(), 1025))),
+            as_id: Rc::new(RefCell::new(Ident::new("as".to_string(), 0))),
+            break_id: Rc::new(RefCell::new(Ident::new("break".to_string(), 1))),
+            continue_id: Rc::new(RefCell::new(Ident::new("continue".to_string(), 2))),
+            else_id: Rc::new(RefCell::new(Ident::new("else".to_string(), 3))),
+            enum_id: Rc::new(RefCell::new(Ident::new("enum".to_string(), 4))),
+            false_id: Rc::new(RefCell::new(Ident::new("false".to_string(), 5))),
+            fn_id: Rc::new(RefCell::new(Ident::new("fn".to_string(), 6))),
+            for_id: Rc::new(RefCell::new(Ident::new("for".to_string(), 7))),
+            if_id: Rc::new(RefCell::new(Ident::new("if".to_string(), 8))),
+            let_id: Rc::new(RefCell::new(Ident::new("let".to_string(), 9))),
+            return_id: Rc::new(RefCell::new(Ident::new("return".to_string(), 10))),
+            self_id: Rc::new(RefCell::new(Ident::new("self".to_string(), 11))),
+            struct_id: Rc::new(RefCell::new(Ident::new("struct".to_string(), 12))),
+            true_id: Rc::new(RefCell::new(Ident::new("true".to_string(), 13))),
+            while_id: Rc::new(RefCell::new(Ident::new("while".to_string(), 14))),
         }
     }
 }
 
-pub fn make_maps() -> (HashMap<&'static str, T>, HashMap<&'static str, T>, HashMap<&'static str, T>, HashMap<&'static str, T>, HashMap<&'static str, T>) {
+pub fn make_maps() -> (HashMap<&'static str, T>, HashMap<&'static str, T>, HashMap<&'static str, T>, HashMap<&'static str, T>) {
     let mut punct_map_3: HashMap<&str, T> = HashMap::new();
     let mut punct_map_2: HashMap<&str, T> = HashMap::new();
     let mut punct_map_1: HashMap<&str, T> = HashMap::new();
     let mut punct_map_u: HashMap<&str, T> = HashMap::new();
-    let mut keywords: HashMap<&str, T> = HashMap::new();
 
     // " ... && -= >= ~ + ; ] <: "
     // " <<= &= -> >> % , < ^ :> "
@@ -104,29 +129,5 @@ pub fn make_maps() -> (HashMap<&'static str, T>, HashMap<&'static str, T>, HashM
     punct_map_u.insert("`", T::T_GRAVE_ACCENT);
     punct_map_u.insert("\\", T::T_BACKSLASH);
 
-    // // Keywords
-    // keywords.insert("break", T::break_ident);
-    // keywords.insert("continue", T::continue_ident);
-    // keywords.insert("do", T::do_ident);
-    // keywords.insert("else", T::else_ident);
-    // keywords.insert("for", T::for_ident);
-    // keywords.insert("if", T::if_ident);
-    // keywords.insert("return", T::return_ident);
-    // keywords.insert("while", T::while_ident);
-    // keywords.insert("static", T::static_ident);
-    // keywords.insert("pub", T::pub_ident);
-    // keywords.insert("true", T::true_ident);
-    // keywords.insert("false", T::false_ident);
-    // keywords.insert("self", T::self_ident);
-    // keywords.insert("default", T::default_ident);
-    // keywords.insert("static_assert", T::static_assert_ident);
-    // keywords.insert("assert_true", T::assert_true_ident);
-    // keywords.insert("char", T::char_ident);
-    // keywords.insert("u8", T::u8_ident);
-    // keywords.insert("i32", T::i32_ident);
-    // keywords.insert("bool", T::bool_ident);
-    // keywords.insert("struct", T::struct_ident);
-
-
-    return (punct_map_3, punct_map_2, punct_map_1, punct_map_u, keywords);
+    return (punct_map_3, punct_map_2, punct_map_1, punct_map_u);
 }
