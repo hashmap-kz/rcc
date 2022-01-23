@@ -33,7 +33,7 @@ fn main() {
     println!("{}", struct_impl);
 
 
-    let mut idmap = String::from("fn make_id_map(keywords: &Keywords) -> HashMap<String, Rc<RefCell<Ident>>> {\n");
+    let mut idmap = String::from("pub fn make_id_map(keywords: &Keywords) -> HashMap<String, Rc<RefCell<Ident>>> {\n");
     idmap.push_str("    let mut idmap = HashMap::new();\n");
     for w in &words {
         write!(idmap, "    idmap.insert(\"{}\".to_string(), Rc::clone(&keywords.{}_id));\n", w, w).unwrap();

@@ -233,12 +233,11 @@ impl Token {
         self.tp == tp
     }
 
-    pub(crate) fn is_any_ident(&self) -> bool {
-        return self.tp >= T::TOKEN_IDENT;
-    }
-
-    pub(crate) fn is_kw(&self) -> bool {
-        return self.tp > T::TOKEN_IDENT;
+    pub fn is_ident(&self, what: &Rc<RefCell<Ident>>) -> bool {
+        if !self.is(T::TOKEN_IDENT) {
+            return false;
+        }
+        return &self.id.as_ref().unwrap() == &what;
     }
 
     pub(crate) fn has_leading_ws(&self) -> bool {

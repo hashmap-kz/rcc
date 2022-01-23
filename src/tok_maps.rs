@@ -45,6 +45,26 @@ impl Keywords {
     }
 }
 
+pub fn make_id_map(keywords: &Keywords) -> HashMap<String, Rc<RefCell<Ident>>> {
+    let mut idmap = HashMap::new();
+    idmap.insert("as".to_string(), Rc::clone(&keywords.as_id));
+    idmap.insert("break".to_string(), Rc::clone(&keywords.break_id));
+    idmap.insert("continue".to_string(), Rc::clone(&keywords.continue_id));
+    idmap.insert("else".to_string(), Rc::clone(&keywords.else_id));
+    idmap.insert("enum".to_string(), Rc::clone(&keywords.enum_id));
+    idmap.insert("false".to_string(), Rc::clone(&keywords.false_id));
+    idmap.insert("fn".to_string(), Rc::clone(&keywords.fn_id));
+    idmap.insert("for".to_string(), Rc::clone(&keywords.for_id));
+    idmap.insert("if".to_string(), Rc::clone(&keywords.if_id));
+    idmap.insert("let".to_string(), Rc::clone(&keywords.let_id));
+    idmap.insert("return".to_string(), Rc::clone(&keywords.return_id));
+    idmap.insert("self".to_string(), Rc::clone(&keywords.self_id));
+    idmap.insert("struct".to_string(), Rc::clone(&keywords.struct_id));
+    idmap.insert("true".to_string(), Rc::clone(&keywords.true_id));
+    idmap.insert("while".to_string(), Rc::clone(&keywords.while_id));
+    return idmap;
+}
+
 pub fn make_maps() -> (HashMap<&'static str, T>, HashMap<&'static str, T>, HashMap<&'static str, T>, HashMap<&'static str, T>) {
     let mut punct_map_3: HashMap<&str, T> = HashMap::new();
     let mut punct_map_2: HashMap<&str, T> = HashMap::new();

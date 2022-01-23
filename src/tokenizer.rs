@@ -169,7 +169,7 @@ impl Tokenizer {
             // macro-name, it may be a special symbol, etc... So: we do not have to store somewhere
             // a special hash-table for names if we can bind each name with a token in the
             // token-tree. This simple trick works fine in C, with a raw-pointers, where we can
-            // compare these identifiers as a pointers, and not as strings.
+            // compare these identifiers as pointers, and not as strings.
             //
             if !self.idmap.contains_key(&sb) {
                 let id = Ident::new(sb.clone(), self.id_counter);
@@ -328,7 +328,7 @@ impl Tokenizer {
                 }
 
                 let x = opt.unwrap();
-                t.id = Option::from(x.clone());
+                t.id = Option::from(Rc::clone(&x));
             }
 
             if t.is(T::TOKEN_EOF) {
