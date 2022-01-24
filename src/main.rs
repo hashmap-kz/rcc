@@ -79,6 +79,34 @@ impl Parser {
         return saved;
     }
 
+    fn peek(&mut self, how_much: usize) -> Vec<Rc<Token>> {
+        let offset = self.offset;
+        let mut result: Vec<Rc<Token>> = Vec::new();
+
+        let mut cnt: usize = 0;
+        while cnt < how_much && !self.is_eof() {
+            let tok = self.move_get();
+            result.push(tok);
+            cnt += 1;
+        }
+
+        self.offset = offset;
+        return result;
+    }
+
+    fn peek_1(&mut self) -> Rc<Token> {
+        let offset = self.offset;
+
+        if self.is_eof() {
+            return Rc::new(Token::make_eof());
+        }
+
+        let tok = self.move_get();
+        self.offset = offset;
+
+        return tok;
+    }
+
     fn checked_move_id(&mut self, id: &Rc<RefCell<Ident>>) -> Rc<Token> {
         if self.curr().is_ident(&id) {
             return self.move_get();
@@ -124,12 +152,16 @@ fn main() {
     let tokens = tokenizer.tokenize();
     let mut parser = Parser::new(tokens);
 
-    let line = parser.cut_till_newline();
-    for t in &line {
-        println!("{:?}", t);
+    let peeks = parser.peek(3);
+    for t in &peeks {
+        //println!("{:?}", t);
     }
 
-    let br = parser.checked_mode_tp(T::T_LEFT_BRACE);
+    println!("move: {:?}", parser.move_get());
+    println!("peek: {:?}", parser.peek_1());
+    println!("peek: {:?}", parser.peek_1());
+    println!("peek: {:?}", parser.peek_1());
+    println!("move: {:?}", parser.move_get());
 
     println!("\n:ok:\n");
 }
