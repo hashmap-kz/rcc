@@ -4,13 +4,15 @@
 #![allow(unused_mut)]
 
 use std::{fmt, io};
-use std::borrow::Borrow;
-use std::cell::RefCell;
+use std::any::Any;
+use std::cell::{Ref, RefCell, RefMut};
 use std::collections::HashMap;
 use std::fmt::Write;
 use std::fs::File;
 use std::io::Read;
+use std::mem;
 use std::ops::Deref;
+use std::panic::panic_any;
 use std::rc::Rc;
 use std::thread::current;
 
@@ -30,92 +32,61 @@ mod tokenizer;
 mod token;
 mod tok_printer;
 
-pub type SharedToken = Rc<RefCell<Token>>;
-
-fn make_shared_token(from: &Token) -> SharedToken {
-    return Rc::new(RefCell::new(from.clone()));
-}
 
 #[derive(Debug, Clone)]
-pub struct SharedTokenTree {
-    tokens: Vec<SharedToken>,
-}
-
-impl SharedTokenTree {
-    pub fn new(input: &Vec<Token>) -> Self {
-        let mut tokens: Vec<SharedToken> = Vec::new();
-        for t in input {
-            tokens.push(make_shared_token(t));
-        }
-        SharedTokenTree { tokens }
-    }
-
-    fn get(&self, at: usize) -> SharedToken {
-        assert!(at < self.tokens.len());
-        let to_copy = self.tokens.get(at);
-
-        assert!(to_copy.is_some());
-        return Rc::clone(to_copy.unwrap());
-    }
-
-    fn len(&self) -> usize {
-        self.tokens.len()
-    }
-}
-
-#[derive(Debug, Clone)]
-struct XParser {
-    tokens: SharedTokenTree,
+struct Parser {
+    tokens: Vec<Rc<Token>>,
     offset: usize,
     size: usize,
-    curr: SharedToken,
-    prev: Option<SharedToken>,
 }
 
-impl XParser {
-    fn new(input: &Vec<Token>) -> Self {
-        if input.is_empty() {
-            panic!("an empty token-list.")
+impl Parser {
+    fn new(input: Vec<Token>) -> Self {
+        let mut tokens: Vec<Rc<Token>> = Vec::new();
+        for t in input {
+            tokens.push(Rc::new(t));
         }
 
-        let tokens = SharedTokenTree::new(input);
-        let curr = tokens.get(0);
         let size = tokens.len();
 
-        XParser {
+        Parser {
             tokens,
             offset: 0,
             size,
-            curr,
-            prev: None
         }
     }
 
+    #[inline]
+    fn curr(&self) -> Rc<Token> {
+        assert!(self.offset < self.size);
+        return Rc::clone(&self.tokens.get(self.offset).unwrap());
+    }
+
+
     fn is_eof(&self) -> bool {
-        if self.curr.borrow_mut().is(T::TOKEN_EOF) {
+        if self.curr().is(T::TOKEN_EOF) {
             return true;
         }
         return self.offset >= self.size;
     }
 
-    fn move_get(&mut self) -> SharedToken {
+    fn move_get(&mut self) -> Rc<Token> {
         assert!(self.offset < self.size);
 
-        let saved = self.tokens.get(self.offset);
+        let saved = Rc::clone(&self.tokens.get(self.offset).unwrap());
         self.offset += 1;
-
-        self.prev = Some(Rc::clone(&self.curr));
-        self.curr = Rc::clone(&saved);
 
         return saved;
     }
+
+    fn checked_move_id(&mut self, id: &Rc<RefCell<Ident>>) -> Rc<Token> {
+        if self.curr().is_ident(&id) {
+            return self.move_get();
+        }
+        let name: RefMut<Ident> = id.borrow_mut();
+        panic!("expected identifier: `{}`, but found value: `{}`", &name.name, &self.curr().value);
+    }
 }
-
-enum XTree {
-    Func(SharedToken, Vec<SharedToken>), // name, parameters
-}
-
-
 
 fn main() {
     let filename = "./resources/test_data/test1.txt".to_string();
@@ -126,24 +97,16 @@ fn main() {
     // this one we will move to tokenizer, we do not need to use it by hand.
     // we do not interested with this hash-table, its purpose to make all identifiers
     // unique, that's it.
-    let identifiers= tok_maps::make_id_map(&keywords);
+    let identifiers = tok_maps::make_id_map(&keywords);
 
     let mut tokenizer = Tokenizer::new_from_file(filename, identifiers);
     let tokens = tokenizer.tokenize();
-    let mut parser = XParser::new(&tokens);
+    let mut parser = Parser::new(tokens);
 
     while !parser.is_eof() {
         let tok = parser.move_get();
-        let x = tok.borrow_mut();
-        if x.is(T::TOKEN_EOF) {
-            break;
-        }
-        if x.is(T::TOKEN_IDENT) {
-            println!("is func: {}", x.is_ident(&keywords.fn_id));
-        }
-        println!("{:?}", x);
+        println!("{}", &tok.value);
     }
-
 
     println!("\n:ok:\n");
 }

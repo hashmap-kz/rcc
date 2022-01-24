@@ -117,7 +117,7 @@ impl Default for MetaSym {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Ident {
-    name: String,
+    pub name: String,
     uid: usize,
     sym: Option<MetaSym>,
 }
