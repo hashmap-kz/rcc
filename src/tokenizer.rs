@@ -7,7 +7,7 @@ use std::rc::Rc;
 
 use crate::{ascii_util, tok_maps};
 use crate::cbuf::CBuf;
-use crate::tok_flags::{IS_AT_BOL, LF_AFTER, WS_BEFORE};
+use crate::tok_flags::{IS_AT_BOL, LF_AFTER, WS_BEFORE, USER_DEFINED_ID_BEGIN_UID};
 use crate::tok_maps::Keywords;
 use crate::token::{Ident, SourceLoc, T, Token};
 
@@ -24,7 +24,7 @@ pub struct Tokenizer {
 }
 
 impl Tokenizer {
-    pub fn new_from_file(file_name: String, keywords: &Keywords, idmap: HashMap<String, Rc<RefCell<Ident>>>) -> Self {
+    pub fn new_from_file(file_name: String, idmap: HashMap<String, Rc<RefCell<Ident>>>) -> Self {
         let content = read_file(&file_name);
 
         let maps = tok_maps::make_maps();
@@ -41,11 +41,11 @@ impl Tokenizer {
             punct_map_1,
             punct_map_u,
             idmap,
-            id_counter: 8192,
+            id_counter: USER_DEFINED_ID_BEGIN_UID,
         }
     }
 
-    pub fn new_from_string(content: String) -> Self {
+    pub fn new_from_string(content: String, idmap: HashMap<String, Rc<RefCell<Ident>>>) -> Self {
         let maps = tok_maps::make_maps();
         let mut punct_map_3 = maps.0;
         let mut punct_map_2 = maps.1;
@@ -59,8 +59,8 @@ impl Tokenizer {
             punct_map_2,
             punct_map_1,
             punct_map_u,
-            idmap: HashMap::new(),
-            id_counter: 8192,
+            idmap,
+            id_counter: USER_DEFINED_ID_BEGIN_UID,
         }
     }
 
@@ -259,7 +259,7 @@ impl Tokenizer {
 
             let line = buffer.line;
             let column = buffer.column;
-            let loc = SourceLoc::new(self.file_name.clone(), line, column);
+            let loc = SourceLoc::new(Rc::clone(&self.file_name), line, column);
 
             let mut sb = String::new();
             while !buffer.is_eof() {
@@ -389,7 +389,7 @@ impl Tokenizer {
         if col >= len {
             offs = col - len + 1;
         }
-        let fname = self.file_name.clone();
+        let fname = Rc::clone(&self.file_name);
         return SourceLoc::new(fname, self.buffer.line, offs);
     }
 }

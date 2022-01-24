@@ -14,7 +14,6 @@ use std::ops::Deref;
 use std::rc::Rc;
 use std::thread::current;
 
-use parser::Parse;
 use tok_flags::{IS_AT_BOL, LF_AFTER, WS_BEFORE};
 use token::Token;
 
@@ -30,7 +29,6 @@ mod tok_flags;
 mod tokenizer;
 mod token;
 mod tok_printer;
-mod parser;
 
 pub type SharedToken = Rc<RefCell<Token>>;
 
@@ -130,7 +128,7 @@ fn main() {
     // unique, that's it.
     let identifiers= tok_maps::make_id_map(&keywords);
 
-    let mut tokenizer = Tokenizer::new_from_file(filename, &keywords, identifiers);
+    let mut tokenizer = Tokenizer::new_from_file(filename, identifiers);
     let tokens = tokenizer.tokenize();
     let mut parser = XParser::new(&tokens);
 
