@@ -86,6 +86,27 @@ impl Parser {
         let name: RefMut<Ident> = id.borrow_mut();
         panic!("expected identifier: `{}`, but found value: `{}`", &name.name, &self.curr().value);
     }
+
+    fn checked_mode_tp(&mut self, tp: T) -> Rc<Token> {
+        // TODO: remove clone() here, add to_string() impl for T::
+        if self.curr().is(tp.clone()) {
+            return self.move_get();
+        }
+        panic!("expected token-type: `{:?}`, but found value: `{}`", &tp, &self.curr().value);
+    }
+
+    fn cut_till_newline(&mut self) -> Vec<Rc<Token>> {
+        let mut result: Vec<Rc<Token>> = Vec::new();
+        while !self.is_eof() {
+            let tok = self.move_get();
+            if tok.has_newline_after() {
+                result.push(tok);
+                break;
+            }
+            result.push(tok);
+        }
+        return result;
+    }
 }
 
 fn main() {
@@ -103,10 +124,12 @@ fn main() {
     let tokens = tokenizer.tokenize();
     let mut parser = Parser::new(tokens);
 
-    while !parser.is_eof() {
-        let tok = parser.move_get();
-        println!("{}", &tok.value);
+    let line = parser.cut_till_newline();
+    for t in &line {
+        println!("{:?}", t);
     }
+
+    let br = parser.checked_mode_tp(T::T_LEFT_BRACE);
 
     println!("\n:ok:\n");
 }
