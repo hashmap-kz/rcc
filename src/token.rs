@@ -3,7 +3,7 @@ use std::fmt;
 use std::fmt::Write;
 use std::rc::Rc;
 
-use crate::tok_flags::{ IS_AT_BOL, LF_AFTER, WS_BEFORE};
+use crate::tok_flags::{IS_AT_BOL, LF_AFTER, WS_BEFORE};
 use crate::token::T::TOKEN_IDENT;
 
 //@formatter:off
@@ -78,6 +78,13 @@ pub enum T {
     T_AT_SIGN, // @
     T_GRAVE_ACCENT, // `
     T_BACKSLASH, // \
+
+    // preprocessor
+    T_SPEC_UNHIDE,
+    T_SPEC_PLACEMARKER,
+    HASH_NEWLINE,
+    HASH_DEFINE,
+    HASH_INCLUDE,
 }
 //@formatter:on
 
@@ -128,12 +135,13 @@ impl Ident {
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct Token {
-    pub(crate) tp: T,
-    pub(crate) value: String,
-    pub(crate) pos: u32,
-    pub(crate) cat: u32,
-    pub(crate) loc: SourceLoc,
+    pub tp: T,
+    pub value: String,
+    pub pos: u32,
+    pub cat: u32,
+    pub loc: SourceLoc,
     pub id: Option<Rc<RefCell<Ident>>>,
+    pub noexpand: bool,
 }
 
 impl Default for Token {
@@ -145,6 +153,7 @@ impl Default for Token {
             cat: 0,
             loc: SourceLoc::default(),
             id: None,
+            noexpand: false,
         }
     }
 }
@@ -210,20 +219,33 @@ impl Token {
             cat: 0,
             loc,
             id: None,
+            noexpand: false,
+        }
+    }
+
+    pub(crate) fn new_from(another: Rc<Token>) -> Self {
+        Token {
+            tp: another.tp.clone(),
+            value: another.value.clone(),
+            pos: another.pos,
+            cat: another.cat,
+            loc: another.loc.clone(),
+            id: another.id.clone(),
+            noexpand: another.noexpand,
         }
     }
 
 
     pub(crate) fn make_eof() -> Self {
-        Token { tp: T::TOKEN_EOF, value: "".to_string(), pos: 0, cat: 0, loc: SourceLoc::default(), id: None }
+        Token { tp: T::TOKEN_EOF, value: "".to_string(), pos: 0, cat: 0, loc: SourceLoc::default(), id: None, noexpand: false }
     }
 
     pub(crate) fn make_ws() -> Self {
-        Token { tp: T::TOKEN_WS, value: " ".to_string(), pos: 0, cat: 0, loc: SourceLoc::default(), id: None }
+        Token { tp: T::TOKEN_WS, value: " ".to_string(), pos: 0, cat: 0, loc: SourceLoc::default(), id: None, noexpand: false }
     }
 
     pub(crate) fn make_lf() -> Self {
-        Token { tp: T::TOKEN_LF, value: "\n".to_string(), pos: 0, cat: 0, loc: SourceLoc::default(), id: None }
+        Token { tp: T::TOKEN_LF, value: "\n".to_string(), pos: 0, cat: 0, loc: SourceLoc::default(), id: None, noexpand: false }
     }
 
     pub(crate) fn is(&self, tp: T) -> bool {
