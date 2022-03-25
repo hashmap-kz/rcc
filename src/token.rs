@@ -130,7 +130,8 @@ impl Ident {
 pub struct Token {
     pub(crate) tp: T,
     pub(crate) value: String,
-    pub(crate) pos: i32,
+    pub(crate) pos: u32,
+    pub(crate) cat: u32,
     pub(crate) loc: SourceLoc,
     pub id: Option<Rc<RefCell<Ident>>>,
 }
@@ -141,6 +142,7 @@ impl Default for Token {
             tp: T::TOKEN_ERROR,
             value: "".to_string(),
             pos: 0,
+            cat: 0,
             loc: SourceLoc::default(),
             id: None,
         }
@@ -205,6 +207,7 @@ impl Token {
             tp,
             value,
             pos: 0,
+            cat: 0,
             loc,
             id: None,
         }
@@ -212,15 +215,15 @@ impl Token {
 
 
     pub(crate) fn make_eof() -> Self {
-        Token { tp: T::TOKEN_EOF, value: "".to_string(), pos: 0, loc: SourceLoc::default(), id: None }
+        Token { tp: T::TOKEN_EOF, value: "".to_string(), pos: 0, cat: 0, loc: SourceLoc::default(), id: None }
     }
 
     pub(crate) fn make_ws() -> Self {
-        Token { tp: T::TOKEN_WS, value: " ".to_string(), pos: 0, loc: SourceLoc::default(), id: None }
+        Token { tp: T::TOKEN_WS, value: " ".to_string(), pos: 0, cat: 0, loc: SourceLoc::default(), id: None }
     }
 
     pub(crate) fn make_lf() -> Self {
-        Token { tp: T::TOKEN_LF, value: "\n".to_string(), pos: 0, loc: SourceLoc::default(), id: None }
+        Token { tp: T::TOKEN_LF, value: "\n".to_string(), pos: 0, cat: 0, loc: SourceLoc::default(), id: None }
     }
 
     pub(crate) fn is(&self, tp: T) -> bool {

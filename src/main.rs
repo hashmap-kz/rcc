@@ -34,13 +34,13 @@ mod tok_printer;
 
 
 #[derive(Debug, Clone)]
-struct Parser {
+struct TokenBuf {
     tokens: Vec<Rc<Token>>,
     offset: usize,
     size: usize,
 }
 
-impl Parser {
+impl TokenBuf {
     fn new(input: Vec<Token>) -> Self {
         let mut tokens: Vec<Rc<Token>> = Vec::new();
         for t in input {
@@ -49,7 +49,22 @@ impl Parser {
 
         let size = tokens.len();
 
-        Parser {
+        TokenBuf {
+            tokens,
+            offset: 0,
+            size,
+        }
+    }
+
+    fn new_rc(input: Vec<Rc<Token>>) -> Self {
+        let mut tokens: Vec<Rc<Token>> = Vec::new();
+        for t in input {
+            tokens.push(t);
+        }
+
+        let size = tokens.len();
+
+        TokenBuf {
             tokens,
             offset: 0,
             size,
@@ -77,6 +92,22 @@ impl Parser {
         self.offset += 1;
 
         return saved;
+    }
+
+    fn move_get_id(&mut self, id: &Rc<RefCell<Ident>>) -> Rc<Token> {
+        if self.tok().is_ident(&id) {
+            return self.move_get();
+        }
+        let name: RefMut<Ident> = id.borrow_mut();
+        panic!("expected identifier: `{}`, but found value: `{}`", &name.name, &self.tok().value);
+    }
+
+    fn move_get_tp(&mut self, tp: T) -> Rc<Token> {
+        // TODO: remove clone() here, add to_string() impl for T::
+        if self.tok().is(tp.clone()) {
+            return self.move_get();
+        }
+        panic!("expected token-type: `{:?}`, but found value: `{}`", &tp, &self.tok().value);
     }
 
     fn peek(&mut self, how_much: usize) -> Vec<Rc<Token>> {
@@ -107,22 +138,6 @@ impl Parser {
         return tok;
     }
 
-    fn checked_move_id(&mut self, id: &Rc<RefCell<Ident>>) -> Rc<Token> {
-        if self.tok().is_ident(&id) {
-            return self.move_get();
-        }
-        let name: RefMut<Ident> = id.borrow_mut();
-        panic!("expected identifier: `{}`, but found value: `{}`", &name.name, &self.tok().value);
-    }
-
-    fn checked_mode_tp(&mut self, tp: T) -> Rc<Token> {
-        // TODO: remove clone() here, add to_string() impl for T::
-        if self.tok().is(tp.clone()) {
-            return self.move_get();
-        }
-        panic!("expected token-type: `{:?}`, but found value: `{}`", &tp, &self.tok().value);
-    }
-
     fn cut_till_newline(&mut self) -> Vec<Rc<Token>> {
         let mut result: Vec<Rc<Token>> = Vec::new();
         while !self.is_eof() {
@@ -150,7 +165,7 @@ fn main() {
 
     let mut tokenizer = Tokenizer::new_from_file(filename, identifiers);
     let tokens = tokenizer.tokenize();
-    let mut parser = Parser::new(tokens);
+    let mut parser = TokenBuf::new(tokens);
 
     let peeks = parser.peek(3);
     for t in &peeks {
