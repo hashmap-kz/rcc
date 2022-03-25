@@ -127,7 +127,7 @@ impl Parser {
         let mut result: Vec<Rc<Token>> = Vec::new();
         while !self.is_eof() {
             let tok = self.move_get();
-            if tok.has_newline_after() {
+            if tok.has_newline_after() || tok.is(T::TOKEN_EOF) {
                 result.push(tok);
                 break;
             }
@@ -155,6 +155,11 @@ fn main() {
     let peeks = parser.peek(3);
     for t in &peeks {
         //println!("{:?}", t);
+    }
+
+    let line = parser.cut_till_newline();
+    for tok in line {
+        println!("{:?}", tok);
     }
 
     println!("move: {:?}", parser.move_get());
