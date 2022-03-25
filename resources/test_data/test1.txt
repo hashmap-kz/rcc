@@ -1,6 +1,5 @@
-fn main()
-{
-    let mut x: i32 = 1;
-    x += 1;
-    x -= 1;
+%:%:define x 32
+
+int main() {
+    return x;
 }

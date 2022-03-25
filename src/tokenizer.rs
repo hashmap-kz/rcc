@@ -14,11 +14,7 @@ use crate::token::{Ident, SourceLoc, T, Token};
 pub struct Tokenizer {
     file_name: Rc<String>,
     buffer: CBuf,
-    punct_map_3: HashMap<&'static str, T>,
-    punct_map_2: HashMap<&'static str, T>,
-    punct_map_1: HashMap<&'static str, T>,
-    punct_map_u: HashMap<&'static str, T>,
-
+    punct_map: HashMap<&'static str, T>,
     idmap: HashMap<String, Rc<RefCell<Ident>>>,
     id_counter: usize,
 }
@@ -26,20 +22,12 @@ pub struct Tokenizer {
 impl Tokenizer {
     pub fn new_from_file(file_name: String, idmap: HashMap<String, Rc<RefCell<Ident>>>) -> Self {
         let content = read_file(&file_name);
-
-        let maps = tok_maps::make_maps();
-        let mut punct_map_3 = maps.0;
-        let mut punct_map_2 = maps.1;
-        let mut punct_map_1 = maps.2;
-        let mut punct_map_u = maps.3;
+        let mut punct_map = tok_maps::make_maps();
 
         Tokenizer {
             file_name: Rc::new(file_name),
             buffer: CBuf::create(&content),
-            punct_map_3,
-            punct_map_2,
-            punct_map_1,
-            punct_map_u,
+            punct_map,
             idmap,
             id_counter: USER_DEFINED_ID_BEGIN_UID,
         }
@@ -47,18 +35,12 @@ impl Tokenizer {
 
     pub fn new_from_string(content: String, idmap: HashMap<String, Rc<RefCell<Ident>>>) -> Self {
         let maps = tok_maps::make_maps();
-        let mut punct_map_3 = maps.0;
-        let mut punct_map_2 = maps.1;
-        let mut punct_map_1 = maps.2;
-        let mut punct_map_u = maps.3;
+        let mut punct_map = tok_maps::make_maps();
 
         Tokenizer {
             file_name: Rc::new("<string-input>".to_string()),
             buffer: CBuf::create(&content),
-            punct_map_3,
-            punct_map_2,
-            punct_map_1,
-            punct_map_u,
+            punct_map,
             idmap,
             id_counter: USER_DEFINED_ID_BEGIN_UID,
         }
@@ -79,10 +61,11 @@ impl Tokenizer {
     {
         let mut buffer = &mut self.buffer;
 
-        let begin = buffer.peek_3();
+        let begin = buffer.peek_4();
         let c1 = begin[0];
         let c2 = begin[1];
         let c3 = begin[2];
+        let c4 = begin[3];
 
         // whitespace, newline, EOF
 
@@ -184,17 +167,33 @@ impl Tokenizer {
 
         if ascii_util::is_op_start(c1) {
 
+            // 4
+            let mut four = String::from(c1 as char);
+            four.push(c2 as char);
+            four.push(c3 as char);
+            four.push(c4 as char);
+
+            if self.punct_map.contains_key(four.as_str()) {
+                buffer.next();
+                buffer.next();
+                buffer.next();
+                buffer.next();
+
+                let tp = self.punct_map.get(four.as_str()).unwrap();
+                return self.create_token(tp.clone(), &four);
+            }
+
             // 3
             let mut three = String::from(c1 as char);
             three.push(c2 as char);
             three.push(c3 as char);
 
-            if self.punct_map_3.contains_key(three.as_str()) {
+            if self.punct_map.contains_key(three.as_str()) {
                 buffer.next();
                 buffer.next();
                 buffer.next();
 
-                let tp = self.punct_map_3.get(three.as_str()).unwrap();
+                let tp = self.punct_map.get(three.as_str()).unwrap();
                 return self.create_token(tp.clone(), &three);
             }
 
@@ -202,21 +201,21 @@ impl Tokenizer {
             let mut two = String::from(c1 as char);
             two.push(c2 as char);
 
-            if self.punct_map_2.contains_key(two.as_str()) {
+            if self.punct_map.contains_key(two.as_str()) {
                 buffer.next();
                 buffer.next();
 
-                let tp = self.punct_map_2.get(two.as_str()).unwrap();
+                let tp = self.punct_map.get(two.as_str()).unwrap();
                 return self.create_token(tp.clone(), &two);
             }
 
             // 1
             let mut one = String::from(c1 as char);
 
-            if self.punct_map_1.contains_key(one.as_str()) {
+            if self.punct_map.contains_key(one.as_str()) {
                 buffer.next();
 
-                let tp = self.punct_map_1.get(one.as_str()).unwrap();
+                let tp = self.punct_map.get(one.as_str()).unwrap();
                 return self.create_token(tp.clone(), &one);
             }
 
@@ -300,15 +299,16 @@ impl Tokenizer {
 
         // other ASCII
         let mut one = String::from(c1 as char);
-
-        if self.punct_map_u.contains_key(one.as_str()) {
+        if self.punct_map.contains_key(one.as_str()) {
             buffer.next();
-
-            let tp = self.punct_map_u.get(one.as_str()).unwrap();
+            let tp = self.punct_map.get(one.as_str()).unwrap();
             return self.create_token(tp.clone(), &one);
         }
 
-        panic!("unimplemented: {}, line: {}", c1 as char, buffer.line);
+        // we do not really know what this char means
+        let unknown = String::from(c1 as char);
+        buffer.next(); // XXX
+        return self.create_token(T::TOKEN_ERROR, &unknown);
     }
 
 

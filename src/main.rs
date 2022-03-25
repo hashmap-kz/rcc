@@ -57,14 +57,14 @@ impl Parser {
     }
 
     #[inline]
-    fn curr(&self) -> Rc<Token> {
+    fn tok(&self) -> Rc<Token> {
         assert!(self.offset < self.size);
         return Rc::clone(&self.tokens.get(self.offset).unwrap());
     }
 
 
     fn is_eof(&self) -> bool {
-        if self.curr().is(T::TOKEN_EOF) {
+        if self.tok().is(T::TOKEN_EOF) {
             return true;
         }
         return self.offset >= self.size;
@@ -73,7 +73,7 @@ impl Parser {
     fn move_get(&mut self) -> Rc<Token> {
         assert!(self.offset < self.size);
 
-        let saved = Rc::clone(&self.tokens.get(self.offset).unwrap());
+        let saved = self.tok();
         self.offset += 1;
 
         return saved;
@@ -108,19 +108,19 @@ impl Parser {
     }
 
     fn checked_move_id(&mut self, id: &Rc<RefCell<Ident>>) -> Rc<Token> {
-        if self.curr().is_ident(&id) {
+        if self.tok().is_ident(&id) {
             return self.move_get();
         }
         let name: RefMut<Ident> = id.borrow_mut();
-        panic!("expected identifier: `{}`, but found value: `{}`", &name.name, &self.curr().value);
+        panic!("expected identifier: `{}`, but found value: `{}`", &name.name, &self.tok().value);
     }
 
     fn checked_mode_tp(&mut self, tp: T) -> Rc<Token> {
         // TODO: remove clone() here, add to_string() impl for T::
-        if self.curr().is(tp.clone()) {
+        if self.tok().is(tp.clone()) {
             return self.move_get();
         }
-        panic!("expected token-type: `{:?}`, but found value: `{}`", &tp, &self.curr().value);
+        panic!("expected token-type: `{:?}`, but found value: `{}`", &tp, &self.tok().value);
     }
 
     fn cut_till_newline(&mut self) -> Vec<Rc<Token>> {

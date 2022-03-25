@@ -165,4 +165,22 @@ impl CBuf {
 
         return res;
     }
+
+    pub fn peek_4(&mut self) -> [u8; 4] {
+        let save_offset = self.offset;
+        let save_line = self.line;
+        let save_column = self.column;
+        let save_prev_char = self.prev_char;
+        let save_eof_cnt = self.eof_cnt;
+
+        let res = [self.next(), self.next(), self.next(), self.next()];
+
+        self.offset = save_offset;
+        self.line = save_line;
+        self.column = save_column;
+        self.prev_char = save_prev_char;
+        self.eof_cnt = save_eof_cnt;
+
+        return res;
+    }
 }
