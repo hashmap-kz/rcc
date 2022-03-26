@@ -3,7 +3,7 @@ use std::fmt;
 use std::fmt::Write;
 use std::rc::Rc;
 
-use crate::shared::shared_ptr;
+use crate::shared::{shared_ptr, shared_vec};
 use crate::tok_flags::{IS_AT_BOL, LF_AFTER, WS_BEFORE};
 use crate::token::T::TOKEN_IDENT;
 
@@ -27,119 +27,63 @@ pub enum T {
     TOKEN_COMMENT,
 
     T_RSHIFT_EQUAL,
-    // >>=
     T_LSHIFT_EQUAL,
-    // <<=
     T_DOT_DOT_DOT,
-    // ...
     T_ARROW,
-    // ->
     T_MINUS_MINUS,
-    // --
     T_MINUS_EQUAL,
-    // -=
     T_NE,
-    // !=
     T_DOT_DOT,
-    // ..
     T_TIMES_EQUAL,
-    // *=
     T_DIVIDE_EQUAL,
-    // /=
     T_AND_EQUAL,
-    // &=
     T_AND_AND,
-    // &&
     T_SHARP_SHARP,
-    // ##
     T_PERCENT_EQUAL,
-    // %=
     T_XOR_EQUAL,
-    // ^=
     T_PLUS_PLUS,
-    // ++
     T_PLUS_EQUAL,
-    // +=
     T_LE,
-    // <=
     T_LSHIFT,
-    // <<
     T_EQ,
-    // ==
     T_GE,
-    // >=
     T_RSHIFT,
-    // >>
     T_OR_OR,
-    // ||
     T_OR_EQUAL,
-    // |=
     T_COMMA,
-    // ,
     T_MINUS,
-    // -
     T_SEMI_COLON,
-    // ;
     T_COLON,
-    // :
     T_EXCLAMATION,
-    // !
     T_QUESTION,
-    // ?
     T_DOT,
-    // .
     T_LEFT_PAREN,
-    // (
     T_RIGHT_PAREN,
-    // )
     T_LEFT_BRACKET,
-    // [
     T_RIGHT_BRACKET,
-    // ]
     T_LEFT_BRACE,
-    // {
     T_RIGHT_BRACE,
-    // }
     T_TIMES,
-    // *
     T_DIVIDE,
-    // /
     T_AND,
-    // &
     T_SHARP,
-    // #
     T_PERCENT,
-    // %
     T_XOR,
-    // ^
     T_PLUS,
-    // +
     T_LT,
-    // <
     T_ASSIGN,
-    // =
     T_GT,
-    // >
     T_OR,
-    // |
     T_TILDE,
-    // ~
     T_DOLLAR_SIGN,
-    // $
     T_AT_SIGN,
-    // @
     T_GRAVE_ACCENT,
-    // `
-    T_BACKSLASH, // \
+    T_BACKSLASH,
 
-    // preprocessor
-    T_SPEC_UNHIDE,
-    T_SPEC_PLACEMARKER,
     HASH_NEWLINE,
     HASH_DEFINE,
     HASH_INCLUDE,
 }
-//@formatter:on
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SourceLoc {
@@ -159,15 +103,43 @@ impl Default for SourceLoc {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
+pub struct Sym {
+    pub repl: shared_vec<Token>,
+    pub is_hidden: bool,
+}
+
+impl Sym {
+    pub fn new(repl: shared_vec<Token>) -> Self {
+        Sym {repl, is_hidden: false }
+    }
+
+    pub fn hide(&mut self) {
+        assert!(!self.is_hidden);
+        self.is_hidden = true;
+    }
+
+    pub fn unhide(&mut self) {
+        assert!(self.is_hidden);
+        self.is_hidden = false;
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Ident {
     pub name: String,
+    pub sym: Option<shared_ptr<Sym>>,
 }
 
 impl Ident {
     pub fn new(name: String) -> Self {
         Ident {
             name,
+            sym: None
         }
+    }
+
+    pub fn set_sym(&mut self, sym: shared_ptr<Sym>) {
+        self.sym = Some(sym);
     }
 }
 

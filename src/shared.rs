@@ -41,6 +41,14 @@ impl<T> shared_vec<T> {
         }
     }
 
+    pub fn new_from(v: Vec<T>) -> Self {
+        let mut nbuf: Vec<shared_ptr<T>> = Vec::new();
+        for elem in v {
+            nbuf.push(shared_ptr::new(elem));
+        }
+        return shared_vec { buf: shared_ptr::new(nbuf) };
+    }
+
     pub fn is_empty(&self) -> bool {
         return self.buf._bor().is_empty();
     }
