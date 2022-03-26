@@ -7,10 +7,13 @@ use std::rc::Rc;
 
 use crate::{ascii_util, tok_maps};
 use crate::cbuf::CBuf;
+use crate::ident::Ident;
 use crate::shared::shared_ptr;
-use crate::tok_flags::{IS_AT_BOL, LF_AFTER, WS_BEFORE, USER_DEFINED_ID_BEGIN_UID};
+use crate::sloc::SourceLoc;
+use crate::tok_flags::{IS_AT_BOL, LF_AFTER, USER_DEFINED_ID_BEGIN_UID, WS_BEFORE};
 use crate::tok_maps::Keywords;
-use crate::token::{Ident, SourceLoc, T, Token};
+use crate::token::Token;
+use crate::toktype::T;
 
 pub struct Tokenizer {
     file_name: Rc<String>,

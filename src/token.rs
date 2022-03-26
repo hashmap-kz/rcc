@@ -3,171 +3,12 @@ use std::fmt;
 use std::fmt::Write;
 use std::rc::Rc;
 
+use crate::ident::Ident;
 use crate::shared::{shared_ptr, shared_vec};
+use crate::sloc::SourceLoc;
 use crate::tok_flags::{IS_AT_BOL, LF_AFTER, WS_BEFORE};
-use crate::token::T::TOKEN_IDENT;
-
-//@formatter:off
-#[derive(Debug, PartialOrd, PartialEq, Eq, Clone)]
-#[allow(non_camel_case_types)]
-pub enum T {
-    TOKEN_ERROR,
-    TOKEN_EOF,
-
-    // These two are temporary.
-    // They won't be present in the result list of tokens.
-    TOKEN_WS,
-    TOKEN_LF,
-
-    // General identifier, may be a user-defined-name, or a keyword.
-    TOKEN_IDENT,
-    TOKEN_NUMBER,
-    TOKEN_CHAR,
-    TOKEN_STRING,
-    TOKEN_COMMENT,
-
-    T_RSHIFT_EQUAL,
-    T_LSHIFT_EQUAL,
-    T_DOT_DOT_DOT,
-    T_ARROW,
-    T_MINUS_MINUS,
-    T_MINUS_EQUAL,
-    T_NE,
-    T_DOT_DOT,
-    T_TIMES_EQUAL,
-    T_DIVIDE_EQUAL,
-    T_AND_EQUAL,
-    T_AND_AND,
-    T_SHARP_SHARP,
-    T_PERCENT_EQUAL,
-    T_XOR_EQUAL,
-    T_PLUS_PLUS,
-    T_PLUS_EQUAL,
-    T_LE,
-    T_LSHIFT,
-    T_EQ,
-    T_GE,
-    T_RSHIFT,
-    T_OR_OR,
-    T_OR_EQUAL,
-    T_COMMA,
-    T_MINUS,
-    T_SEMI_COLON,
-    T_COLON,
-    T_EXCLAMATION,
-    T_QUESTION,
-    T_DOT,
-    T_LEFT_PAREN,
-    T_RIGHT_PAREN,
-    T_LEFT_BRACKET,
-    T_RIGHT_BRACKET,
-    T_LEFT_BRACE,
-    T_RIGHT_BRACE,
-    T_TIMES,
-    T_DIVIDE,
-    T_AND,
-    T_SHARP,
-    T_PERCENT,
-    T_XOR,
-    T_PLUS,
-    T_LT,
-    T_ASSIGN,
-    T_GT,
-    T_OR,
-    T_TILDE,
-    T_DOLLAR_SIGN,
-    T_AT_SIGN,
-    T_GRAVE_ACCENT,
-    T_BACKSLASH,
-
-    T_SPEC_UNHIDE,
-    HASH_NEWLINE,
-    HASH_DEFINE,
-    HASH_INCLUDE,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct SourceLoc {
-    pub file: Rc<String>,
-    pub line: i32,
-    pub column: i32,
-}
-
-impl Default for SourceLoc {
-    fn default() -> Self {
-        SourceLoc {
-            file: Rc::new("".to_string()),
-            line: 0,
-            column: 0,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub struct Sym {
-    pub repl: shared_vec<Token>,
-    pub is_hidden: bool,
-}
-
-impl Sym {
-    pub fn new(name: String, head: &shared_ptr<Token>, mut repl: shared_vec<Token>) -> Self {
-        let mut unhide = Token::new_from(head);
-        unhide.tp = T::T_SPEC_UNHIDE;
-        repl.push_back(shared_ptr::new(unhide));
-
-        Sym {
-            repl,
-            is_hidden: false,
-        }
-    }
-
-    pub fn hide(&mut self) {
-        assert!(!self.is_hidden);
-        self.is_hidden = true;
-    }
-
-    pub fn unhide(&mut self) {
-        assert!(self.is_hidden);
-        self.is_hidden = false;
-    }
-}
-
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub struct Ident {
-    pub name: String,
-    pub sym: Option<shared_ptr<Sym>>,
-}
-
-impl Ident {
-    pub fn new(name: String) -> Self {
-        Ident {
-            name,
-            sym: None,
-        }
-    }
-
-    #[inline]
-    pub fn set_sym(&mut self, sym: shared_ptr<Sym>) {
-        self.sym = Some(sym);
-    }
-
-    #[inline]
-    pub fn get_mut_sym(&self) -> RefMut<Sym> {
-        // TODO: check
-        return self.sym.as_ref().unwrap()._bormut();
-    }
-
-    #[inline]
-    pub fn get_nomut_sym(&self) -> RefMut<Sym> {
-        // TODO: check
-        return self.sym.as_ref().unwrap()._bormut();
-    }
-
-    #[inline]
-    pub fn has_sym(&self) -> bool {
-        return self.sym.is_some();
-    }
-}
+use crate::toktype::T;
+use crate::toktype::T::TOKEN_IDENT;
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct Token {
@@ -190,16 +31,6 @@ impl Default for Token {
             loc: SourceLoc::default(),
             id: None,
             noexpand: false,
-        }
-    }
-}
-
-impl SourceLoc {
-    pub fn new(file: Rc<String>, line: i32, column: i32) -> Self {
-        SourceLoc {
-            file,
-            line,
-            column,
         }
     }
 }

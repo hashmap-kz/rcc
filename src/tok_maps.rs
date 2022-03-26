@@ -1,9 +1,10 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
+use crate::ident::Ident;
 use crate::shared::shared_ptr;
 
-use crate::token::{Ident, T};
+use crate::toktype::T;
 
 #[derive(Debug, Eq, PartialEq)]
 #[allow(non_snake_case)]

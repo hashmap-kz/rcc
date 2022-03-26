@@ -15,15 +15,18 @@ use std::mem;
 use std::ops::Deref;
 use std::panic::panic_any;
 use std::rc::Rc;
+use ident::Ident;
+use sloc::SourceLoc;
+use sym::Sym;
 
 use tok_flags::{IS_AT_BOL, LF_AFTER, WS_BEFORE};
 use token::Token;
 
 use crate::cbuf::CBuf;
 use crate::shared::{shared_ptr, shared_vec};
-use crate::T::{HASH_NEWLINE, TOKEN_EOF};
+use toktype::T::{HASH_NEWLINE, TOKEN_EOF};
 use crate::tok_maps::Keywords;
-use crate::token::{Ident, SourceLoc, Sym, T};
+use toktype::T;
 use crate::tokenizer::Tokenizer;
 
 mod cbuf;
@@ -34,6 +37,10 @@ mod tokenizer;
 mod token;
 mod tok_printer;
 mod shared;
+mod ident;
+mod sym;
+mod sloc;
+mod toktype;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 struct Scan {
@@ -94,12 +101,7 @@ impl Scan {
         return tok;
     }
 
-    fn define(&mut self) {
-        let name = self.pop();
-        if !name._bor().is(T::TOKEN_IDENT) {
-            panic!("expected macro name, but found: {:?}", name);
-        }
-
+    fn cut_line(&mut self) -> shared_vec<Token> {
         let mut repl: shared_vec<Token> = shared_vec::new();
         while !self.is_empty() {
             let t = self.pop();
@@ -109,10 +111,22 @@ impl Scan {
             }
             repl.push_back(t);
         }
-
-        let m = Sym::new(name._bor().val.clone(), &name, repl);
-        name._bor().id.as_ref().unwrap()._bormut().sym = Some(shared_ptr::new(m));
+        repl
     }
+
+
+    fn define(&mut self) {
+        let name = self.pop();
+        if !name._bor().is(T::TOKEN_IDENT) {
+            panic!("expected macro name, but found: {:?}", name);
+        }
+
+        let repl = self.cut_line();
+
+        let m = Sym::new(&name, repl);
+        name._bor().get_mut_ident().set_sym(shared_ptr::new(m));
+    }
+
 
     fn get(&mut self) -> shared_ptr<Token> {
         'restart:

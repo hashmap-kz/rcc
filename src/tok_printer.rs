@@ -1,5 +1,6 @@
-use crate::token::{T, Token};
+use crate::token::Token;
 use std::fmt::Write;
+use crate::toktype::T;
 
 fn pad(level: usize) -> String {
     let mut sb = String::new();
