@@ -7,6 +7,7 @@ use std::rc::Rc;
 
 use crate::{ascii_util, tok_maps};
 use crate::cbuf::CBuf;
+use crate::shared::shared_ptr;
 use crate::tok_flags::{IS_AT_BOL, LF_AFTER, WS_BEFORE, USER_DEFINED_ID_BEGIN_UID};
 use crate::tok_maps::Keywords;
 use crate::token::{Ident, SourceLoc, T, Token};
@@ -15,12 +16,11 @@ pub struct Tokenizer {
     file_name: Rc<String>,
     buffer: CBuf,
     punct_map: HashMap<&'static str, T>,
-    idmap: HashMap<String, Rc<RefCell<Ident>>>,
-    id_counter: usize,
+    idmap: HashMap<String, shared_ptr<Ident>>,
 }
 
 impl Tokenizer {
-    pub fn new_from_file(file_name: String, idmap: HashMap<String, Rc<RefCell<Ident>>>) -> Self {
+    pub fn new_from_file(file_name: String, idmap: HashMap<String, shared_ptr<Ident>>) -> Self {
         let content = read_file(&file_name);
         let mut punct_map = tok_maps::make_maps();
 
@@ -29,11 +29,10 @@ impl Tokenizer {
             buffer: CBuf::create(&content),
             punct_map,
             idmap,
-            id_counter: USER_DEFINED_ID_BEGIN_UID,
         }
     }
 
-    pub fn new_from_string(content: String, idmap: HashMap<String, Rc<RefCell<Ident>>>) -> Self {
+    pub fn new_from_string(content: String, idmap: HashMap<String, shared_ptr<Ident>>) -> Self {
         let maps = tok_maps::make_maps();
         let mut punct_map = tok_maps::make_maps();
 
@@ -42,7 +41,6 @@ impl Tokenizer {
             buffer: CBuf::create(&content),
             punct_map,
             idmap,
-            id_counter: USER_DEFINED_ID_BEGIN_UID,
         }
     }
 
@@ -155,9 +153,8 @@ impl Tokenizer {
             // compare these identifiers as pointers, and not as strings.
             //
             if !self.idmap.contains_key(&sb) {
-                let id = Ident::new(sb.clone(), self.id_counter);
-                self.idmap.insert(sb.clone(), Rc::new(RefCell::new(id)));
-                self.id_counter += 1;
+                let id = Ident::new(sb.clone());
+                self.idmap.insert(sb.clone(), shared_ptr::new(id));
             }
 
             return self.create_token(T::TOKEN_IDENT, &sb);
@@ -328,7 +325,7 @@ impl Tokenizer {
                 }
 
                 let x = opt.unwrap();
-                t.id = Option::from(Rc::clone(&x));
+                t.id = Option::from(shared_ptr::_cloneref(x));
             }
 
             if t.is(T::TOKEN_EOF) {

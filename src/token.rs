@@ -3,6 +3,7 @@ use std::fmt;
 use std::fmt::Write;
 use std::rc::Rc;
 
+use crate::shared::shared_ptr;
 use crate::tok_flags::{IS_AT_BOL, LF_AFTER, WS_BEFORE};
 use crate::token::T::TOKEN_IDENT;
 
@@ -25,58 +26,110 @@ pub enum T {
     TOKEN_STRING,
     TOKEN_COMMENT,
 
-    T_RSHIFT_EQUAL, // >>=
-    T_LSHIFT_EQUAL, // <<=
-    T_DOT_DOT_DOT, // ...
-    T_ARROW, // ->
-    T_MINUS_MINUS, // --
-    T_MINUS_EQUAL, // -=
-    T_NE, // !=
-    T_DOT_DOT, // ..
-    T_TIMES_EQUAL, // *=
-    T_DIVIDE_EQUAL, // /=
-    T_AND_EQUAL, // &=
-    T_AND_AND, // &&
-    T_SHARP_SHARP, // ##
-    T_PERCENT_EQUAL, // %=
-    T_XOR_EQUAL, // ^=
-    T_PLUS_PLUS, // ++
-    T_PLUS_EQUAL, // +=
-    T_LE, // <=
-    T_LSHIFT, // <<
-    T_EQ, // ==
-    T_GE, // >=
-    T_RSHIFT, // >>
-    T_OR_OR, // ||
-    T_OR_EQUAL, // |=
-    T_COMMA, // ,
-    T_MINUS, // -
-    T_SEMI_COLON, // ;
-    T_COLON, // :
-    T_EXCLAMATION, // !
-    T_QUESTION, // ?
-    T_DOT, // .
-    T_LEFT_PAREN, // (
-    T_RIGHT_PAREN, // )
-    T_LEFT_BRACKET, // [
-    T_RIGHT_BRACKET, // ]
-    T_LEFT_BRACE, // {
-    T_RIGHT_BRACE, // }
-    T_TIMES, // *
-    T_DIVIDE, // /
-    T_AND, // &
-    T_SHARP, // #
-    T_PERCENT, // %
-    T_XOR, // ^
-    T_PLUS, // +
-    T_LT, // <
-    T_ASSIGN, // =
-    T_GT, // >
-    T_OR, // |
-    T_TILDE, // ~
-    T_DOLLAR_SIGN, // $
-    T_AT_SIGN, // @
-    T_GRAVE_ACCENT, // `
+    T_RSHIFT_EQUAL,
+    // >>=
+    T_LSHIFT_EQUAL,
+    // <<=
+    T_DOT_DOT_DOT,
+    // ...
+    T_ARROW,
+    // ->
+    T_MINUS_MINUS,
+    // --
+    T_MINUS_EQUAL,
+    // -=
+    T_NE,
+    // !=
+    T_DOT_DOT,
+    // ..
+    T_TIMES_EQUAL,
+    // *=
+    T_DIVIDE_EQUAL,
+    // /=
+    T_AND_EQUAL,
+    // &=
+    T_AND_AND,
+    // &&
+    T_SHARP_SHARP,
+    // ##
+    T_PERCENT_EQUAL,
+    // %=
+    T_XOR_EQUAL,
+    // ^=
+    T_PLUS_PLUS,
+    // ++
+    T_PLUS_EQUAL,
+    // +=
+    T_LE,
+    // <=
+    T_LSHIFT,
+    // <<
+    T_EQ,
+    // ==
+    T_GE,
+    // >=
+    T_RSHIFT,
+    // >>
+    T_OR_OR,
+    // ||
+    T_OR_EQUAL,
+    // |=
+    T_COMMA,
+    // ,
+    T_MINUS,
+    // -
+    T_SEMI_COLON,
+    // ;
+    T_COLON,
+    // :
+    T_EXCLAMATION,
+    // !
+    T_QUESTION,
+    // ?
+    T_DOT,
+    // .
+    T_LEFT_PAREN,
+    // (
+    T_RIGHT_PAREN,
+    // )
+    T_LEFT_BRACKET,
+    // [
+    T_RIGHT_BRACKET,
+    // ]
+    T_LEFT_BRACE,
+    // {
+    T_RIGHT_BRACE,
+    // }
+    T_TIMES,
+    // *
+    T_DIVIDE,
+    // /
+    T_AND,
+    // &
+    T_SHARP,
+    // #
+    T_PERCENT,
+    // %
+    T_XOR,
+    // ^
+    T_PLUS,
+    // +
+    T_LT,
+    // <
+    T_ASSIGN,
+    // =
+    T_GT,
+    // >
+    T_OR,
+    // |
+    T_TILDE,
+    // ~
+    T_DOLLAR_SIGN,
+    // $
+    T_AT_SIGN,
+    // @
+    T_GRAVE_ACCENT,
+    // `
     T_BACKSLASH, // \
 
     // preprocessor
@@ -106,29 +159,14 @@ impl Default for SourceLoc {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct MetaSym {
-    stub: i32,
-}
-
-impl Default for MetaSym {
-    fn default() -> Self {
-        MetaSym { stub: 0 }
-    }
-}
-
-#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Ident {
     pub name: String,
-    uid: usize,
-    sym: Option<MetaSym>,
 }
 
 impl Ident {
-    pub fn new(name: String, uid: usize) -> Self {
+    pub fn new(name: String) -> Self {
         Ident {
             name,
-            uid,
-            sym: None,
         }
     }
 }
@@ -140,7 +178,7 @@ pub struct Token {
     pub pos: u32,
     pub cat: u32,
     pub loc: SourceLoc,
-    pub id: Option<Rc<RefCell<Ident>>>,
+    pub id: Option<shared_ptr<Ident>>,
     pub noexpand: bool,
 }
 
@@ -195,9 +233,9 @@ impl fmt::Debug for Token {
 
         let mut ident = String::from("");
         if self.is(T::TOKEN_IDENT) {
-            let x = self.id.as_ref().unwrap().borrow();
+            let x = self.id.as_ref().unwrap()._bor();
             ident = String::from("");
-            write!(ident, "{} :{}", x.name.clone(), x.uid).unwrap();
+            write!(ident, "{}", x.name.clone()).unwrap();
         }
 
         f.debug_struct("Token")
@@ -252,11 +290,11 @@ impl Token {
         self.tp == tp
     }
 
-    pub fn is_ident(&self, what: &Rc<RefCell<Ident>>) -> bool {
+    pub fn is_ident(&self, what: &shared_ptr<Ident>) -> bool {
         if !self.is(T::TOKEN_IDENT) {
             return false;
         }
-        return &self.id.as_ref().unwrap() == &what;
+        return self.id.as_ref().unwrap() == what;
     }
 
     pub(crate) fn has_leading_ws(&self) -> bool {
