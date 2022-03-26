@@ -28,9 +28,9 @@ impl Ident {
     }
 
     #[inline]
-    pub fn get_nomut_sym(&self) -> Ref<Sym> {
+    pub fn get_shared_sym(&self) -> &shared_ptr<Sym> {
         // TODO: check
-        return self.sym.as_ref().unwrap()._bor();
+        return self.sym.as_ref().unwrap();
     }
 
     #[inline]

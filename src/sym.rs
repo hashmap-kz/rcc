@@ -28,4 +28,8 @@ impl Sym {
         assert!(self.is_hidden);
         self.is_hidden = false;
     }
+
+    pub fn is_hidden(&self) -> bool {
+        return self.is_hidden;
+    }
 }

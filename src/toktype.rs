@@ -72,6 +72,7 @@ pub enum T {
     T_BACKSLASH,
 
     T_SPEC_UNHIDE,
+    T_SPEC_PLACEMARKER,
     HASH_NEWLINE,
     HASH_DEFINE,
     HASH_INCLUDE,

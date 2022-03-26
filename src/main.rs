@@ -15,18 +15,18 @@ use std::mem;
 use std::ops::Deref;
 use std::panic::panic_any;
 use std::rc::Rc;
+
 use ident::Ident;
 use sloc::SourceLoc;
 use sym::Sym;
-
 use tok_flags::{IS_AT_BOL, LF_AFTER, WS_BEFORE};
 use token::Token;
+use toktype::T::{HASH_NEWLINE, TOKEN_EOF};
+use toktype::T;
 
 use crate::cbuf::CBuf;
 use crate::shared::{shared_ptr, shared_vec};
-use toktype::T::{HASH_NEWLINE, TOKEN_EOF};
 use crate::tok_maps::Keywords;
-use toktype::T;
 use crate::tokenizer::Tokenizer;
 
 mod cbuf;
@@ -152,14 +152,13 @@ impl Scan {
                 return t;
             }
 
-            let is_hidden = t._bor().get_nomut_ident().get_nomut_sym().is_hidden;
-            if is_hidden {
+            if t._bor().get_nomut_ident().get_shared_sym()._bor().is_hidden {
                 let mut noexpand = Token::new_from(&t);
                 noexpand.noexpand = true;
                 return shared_ptr::new(noexpand);
             }
 
-            self.replace_simple(t._bor().id.as_ref().unwrap()._bor().sym.as_ref().unwrap(), &t);
+            self.replace_simple(t._bor().get_nomut_ident().get_shared_sym(), &t);
             continue 'restart;
         }
         return shared_ptr::new(
@@ -183,12 +182,19 @@ impl Scan {
         macros._bormut().hide();
 
         let res = self.paste_all(head, macros._bor().repl._borvec());
-        let mut j = (res.len() - 1) as isize;
-        while j >= 0 {
-            let tokp = res.get(j as usize);
-            self.push(tokp);
-            j -= 1;
+        for tok in res._borvec().iter().rev() {
+            if tok._bor().is(T::T_SPEC_PLACEMARKER) {
+                continue;
+            }
+            self.push(shared_ptr::_cloneref(tok));
         }
+
+        // let mut j = (res.len() - 1) as isize;
+        // while j >= 0 {
+        //     let tokp = res.get(j as usize);
+        //     self.push(tokp);
+        //     j -= 1;
+        // }
     }
 
     fn paste_all(&mut self, head: &shared_ptr<Token>, repl: Ref<Vec<shared_ptr<Token>>>) -> shared_vec<Token> {
