@@ -133,12 +133,12 @@ impl Scan {
                 return t;
             }
 
-            let is_macro_name = t._bor().id.as_ref().unwrap()._bor().sym.as_ref().is_some();
+            let is_macro_name = t._bor().is_macro_name();
             if !is_macro_name {
                 return t;
             }
 
-            let is_hidden = t._bor().id.as_ref().unwrap()._bor().sym.as_ref().unwrap()._bor().is_hidden;
+            let is_hidden = t._bor().get_nomut_ident().get_nomut_sym().is_hidden;
             if is_hidden {
                 let mut noexpand = Token::new_from(&t);
                 noexpand.noexpand = true;
@@ -158,7 +158,8 @@ impl Scan {
     fn unhide(&mut self, u: &shared_ptr<Token>) -> bool {
         if u._bor().is(T::T_SPEC_UNHIDE) {
             // TODO: simplify
-            u._bor().id.as_ref().unwrap()._bormut().sym.as_ref().unwrap()._bormut().unhide();
+            // u._bor().id.as_ref().unwrap()._bormut().sym.as_ref().unwrap()._bormut().unhide();
+            u._bor().get_nomut_ident().get_mut_sym().unhide();
             return true;
         }
         return false;

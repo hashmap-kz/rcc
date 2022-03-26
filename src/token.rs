@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::cell::{Ref, RefCell, RefMut};
 use std::fmt;
 use std::fmt::Write;
 use std::rc::Rc;
@@ -88,9 +88,9 @@ pub enum T {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SourceLoc {
-    pub(crate) file: Rc<String>,
-    pub(crate) line: i32,
-    pub(crate) column: i32,
+    pub file: Rc<String>,
+    pub line: i32,
+    pub column: i32,
 }
 
 impl Default for SourceLoc {
@@ -146,8 +146,26 @@ impl Ident {
         }
     }
 
+    #[inline]
     pub fn set_sym(&mut self, sym: shared_ptr<Sym>) {
         self.sym = Some(sym);
+    }
+
+    #[inline]
+    pub fn get_mut_sym(&self) -> RefMut<Sym> {
+        // TODO: check
+        return self.sym.as_ref().unwrap()._bormut();
+    }
+
+    #[inline]
+    pub fn get_nomut_sym(&self) -> RefMut<Sym> {
+        // TODO: check
+        return self.sym.as_ref().unwrap()._bormut();
+    }
+
+    #[inline]
+    pub fn has_sym(&self) -> bool {
+        return self.sym.is_some();
     }
 }
 
@@ -229,7 +247,7 @@ impl fmt::Debug for Token {
 }
 
 impl Token {
-    pub(crate) fn new(tp: T, value: String, loc: SourceLoc) -> Self {
+    pub fn new(tp: T, value: String, loc: SourceLoc) -> Self {
         Token {
             tp,
             val: value,
@@ -241,38 +259,43 @@ impl Token {
         }
     }
 
-    pub(crate) fn new_from(another: &shared_ptr<Token>) -> Self {
+    pub fn new_from(another: &shared_ptr<Token>) -> Self {
         let to_copy = another._bor();
         let value = String::from(to_copy.val.clone());
-        let mut id: Option<shared_ptr<Ident>> = None;
-        if to_copy.id.is_some() {
-            id = Option::from(shared_ptr::_cloneref(to_copy.id.as_ref().unwrap()));
-        }
+        let id = to_copy.copy_ident();
         Token {
             tp: to_copy.tp.clone(),
             val: value,
             pos: to_copy.pos,
             cat: to_copy.cat,
             loc: to_copy.loc.clone(),
-            id: id,
+            id,
             noexpand: to_copy.noexpand,
         }
     }
 
+    fn copy_ident(&self) -> Option<shared_ptr<Ident>> {
+        let mut id: Option<shared_ptr<Ident>> = None;
+        if self.id.is_some() {
+            id = Option::from(shared_ptr::_cloneref(self.id.as_ref().unwrap()));
+        }
+        return id;
+    }
 
-    pub(crate) fn make_eof() -> Self {
+    pub fn make_eof() -> Self {
         Token { tp: T::TOKEN_EOF, val: "".to_string(), pos: 0, cat: 0, loc: SourceLoc::default(), id: None, noexpand: false }
     }
 
-    pub(crate) fn make_ws() -> Self {
+    pub fn make_ws() -> Self {
         Token { tp: T::TOKEN_WS, val: " ".to_string(), pos: 0, cat: 0, loc: SourceLoc::default(), id: None, noexpand: false }
     }
 
-    pub(crate) fn make_lf() -> Self {
+    pub fn make_lf() -> Self {
         Token { tp: T::TOKEN_LF, val: "\n".to_string(), pos: 0, cat: 0, loc: SourceLoc::default(), id: None, noexpand: false }
     }
 
-    pub(crate) fn is(&self, tp: T) -> bool {
+    #[inline]
+    pub fn is(&self, tp: T) -> bool {
         self.tp == tp
     }
 
@@ -283,15 +306,35 @@ impl Token {
         return self.id.as_ref().unwrap() == what;
     }
 
-    pub(crate) fn has_leading_ws(&self) -> bool {
+    #[inline]
+    pub fn get_mut_ident(&self) -> RefMut<Ident> {
+        // TODO: check
+        return self.id.as_ref().unwrap()._bormut();
+    }
+
+    #[inline]
+    pub fn get_nomut_ident(&self) -> Ref<Ident> {
+        // TODO: check
+        return self.id.as_ref().unwrap()._bor();
+    }
+
+    #[inline]
+    pub fn is_macro_name(&self) -> bool {
+        if !self.is(T::TOKEN_IDENT) {
+            return false;
+        }
+        return self.get_nomut_ident().has_sym();
+    }
+
+    pub fn has_leading_ws(&self) -> bool {
         return (self.pos & WS_BEFORE) == WS_BEFORE;
     }
 
-    pub(crate) fn has_newline_after(&self) -> bool {
+    pub fn has_newline_after(&self) -> bool {
         return (self.pos & LF_AFTER) == LF_AFTER;
     }
 
-    pub(crate) fn is_at_bol(&self) -> bool {
+    pub fn is_at_bol(&self) -> bool {
         return (self.pos & IS_AT_BOL) == IS_AT_BOL;
     }
 }
