@@ -80,6 +80,7 @@ pub enum T {
     T_GRAVE_ACCENT,
     T_BACKSLASH,
 
+    T_SPEC_UNHIDE,
     HASH_NEWLINE,
     HASH_DEFINE,
     HASH_INCLUDE,
@@ -109,8 +110,15 @@ pub struct Sym {
 }
 
 impl Sym {
-    pub fn new(repl: shared_vec<Token>) -> Self {
-        Sym {repl, is_hidden: false }
+    pub fn new(name: String, head: &shared_ptr<Token>, mut repl: shared_vec<Token>) -> Self {
+        let mut unhide = Token::new_from(head);
+        unhide.tp = T::T_SPEC_UNHIDE;
+        repl.push_back(shared_ptr::new(unhide));
+
+        Sym {
+            repl,
+            is_hidden: false,
+        }
     }
 
     pub fn hide(&mut self) {
@@ -134,7 +142,7 @@ impl Ident {
     pub fn new(name: String) -> Self {
         Ident {
             name,
-            sym: None
+            sym: None,
         }
     }
 
@@ -146,7 +154,7 @@ impl Ident {
 #[derive(PartialEq, Eq, Clone)]
 pub struct Token {
     pub tp: T,
-    pub value: String,
+    pub val: String,
     pub pos: u32,
     pub cat: u32,
     pub loc: SourceLoc,
@@ -158,7 +166,7 @@ impl Default for Token {
     fn default() -> Self {
         Token {
             tp: T::TOKEN_ERROR,
-            value: "".to_string(),
+            val: "".to_string(),
             pos: 0,
             cat: 0,
             loc: SourceLoc::default(),
@@ -212,7 +220,7 @@ impl fmt::Debug for Token {
 
         f.debug_struct("Token")
             .field("tp", &self.tp)
-            .field("value", &self.value)
+            .field("value", &self.val)
             .field("pos", &flag)
             .field("loc", &loc)
             .field("id", &ident)
@@ -224,7 +232,7 @@ impl Token {
     pub(crate) fn new(tp: T, value: String, loc: SourceLoc) -> Self {
         Token {
             tp,
-            value,
+            val: value,
             pos: 0,
             cat: 0,
             loc,
@@ -233,29 +241,35 @@ impl Token {
         }
     }
 
-    pub(crate) fn new_from(another: Rc<Token>) -> Self {
+    pub(crate) fn new_from(another: &shared_ptr<Token>) -> Self {
+        let to_copy = another._bor();
+        let value = String::from(to_copy.val.clone());
+        let mut id: Option<shared_ptr<Ident>> = None;
+        if to_copy.id.is_some() {
+            id = Option::from(shared_ptr::_cloneref(to_copy.id.as_ref().unwrap()));
+        }
         Token {
-            tp: another.tp.clone(),
-            value: another.value.clone(),
-            pos: another.pos,
-            cat: another.cat,
-            loc: another.loc.clone(),
-            id: another.id.clone(),
-            noexpand: another.noexpand,
+            tp: to_copy.tp.clone(),
+            val: value,
+            pos: to_copy.pos,
+            cat: to_copy.cat,
+            loc: to_copy.loc.clone(),
+            id: id,
+            noexpand: to_copy.noexpand,
         }
     }
 
 
     pub(crate) fn make_eof() -> Self {
-        Token { tp: T::TOKEN_EOF, value: "".to_string(), pos: 0, cat: 0, loc: SourceLoc::default(), id: None, noexpand: false }
+        Token { tp: T::TOKEN_EOF, val: "".to_string(), pos: 0, cat: 0, loc: SourceLoc::default(), id: None, noexpand: false }
     }
 
     pub(crate) fn make_ws() -> Self {
-        Token { tp: T::TOKEN_WS, value: " ".to_string(), pos: 0, cat: 0, loc: SourceLoc::default(), id: None, noexpand: false }
+        Token { tp: T::TOKEN_WS, val: " ".to_string(), pos: 0, cat: 0, loc: SourceLoc::default(), id: None, noexpand: false }
     }
 
     pub(crate) fn make_lf() -> Self {
-        Token { tp: T::TOKEN_LF, value: "\n".to_string(), pos: 0, cat: 0, loc: SourceLoc::default(), id: None, noexpand: false }
+        Token { tp: T::TOKEN_LF, val: "\n".to_string(), pos: 0, cat: 0, loc: SourceLoc::default(), id: None, noexpand: false }
     }
 
     pub(crate) fn is(&self, tp: T) -> bool {

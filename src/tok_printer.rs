@@ -49,7 +49,7 @@ pub fn tokens_to_string_loc(tokens: &Vec<Token>) -> String {
             if t.has_leading_ws() {
                 tmp.push_str(" ");
             }
-            let value = &*t.value.clone();
+            let value = &*t.val.clone();
             tmp.push_str(&value);
 
             if t.is(T::T_LEFT_BRACE) {

@@ -319,9 +319,9 @@ impl Tokenizer {
             let mut t = self.next();
 
             if t.is(T::TOKEN_IDENT) {
-                let opt = self.idmap.get(&t.value);
+                let opt = self.idmap.get(&t.val);
                 if opt.is_none() {
-                    panic!("cannot find the name `{}` in the hash-table", &t.value);
+                    panic!("cannot find the name `{}` in the hash-table", &t.val);
                 }
 
                 let x = opt.unwrap();
