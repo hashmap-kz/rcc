@@ -12,11 +12,15 @@ pub struct Keywords {
     pub break_ident: shared_ptr<Ident>,
 }
 
+fn id(name: &str) -> shared_ptr<Ident> {
+    return shared_ptr::new(Ident::new(name.to_string()));
+}
+
 impl Keywords {
     pub fn new() -> Self {
         Keywords {
-            auto_ident: shared_ptr::new(Ident::new("auto".to_string())),
-            break_ident: shared_ptr::new(Ident::new("break".to_string())),
+            auto_ident: id("auto"),
+            break_ident: id("break"),
         }
     }
 }
